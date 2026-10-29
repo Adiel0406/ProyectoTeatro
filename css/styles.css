@@ -2264,3 +2264,310 @@ summary:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+/* ========================================== */
+/* ESTILOS DE TALLERES Y FAQ (CORREGIDOS)     */
+/* ========================================== */
+
+:root {
+  --bg-dark: #0a0a0c;
+  --bg-card: #141419;
+  --bg-card-hover: #1c1c24;
+  --accent-amber: #e69539;
+  --accent-amber-glow: rgba(230, 149, 57, 0.15);
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-color-hover: rgba(230, 149, 57, 0.4);
+}
+
+/* Contenedor general */
+.section-shell {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  padding: 5rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Encabezado de la sección */
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 3rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.eyebrow {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-amber);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.eyebrow__rule {
+  display: inline-block;
+  width: 30px;
+  height: 2px;
+  background-color: var(--accent-amber);
+}
+
+.section-heading h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.heading-period {
+  color: var(--accent-amber);
+}
+
+.section-heading__aside {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: right;
+  margin: 0;
+}
+
+/* Grupo de Acordeones con separación segura */
+.accordion-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 3rem;
+}
+
+/* Tarjetas con encuadre (<details>) */
+.accordion-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.accordion-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-color-hover);
+  box-shadow: 0 8px 30px -8px rgba(0, 0, 0, 0.4);
+}
+
+.accordion-card[open] {
+  border-color: var(--accent-amber);
+  background: var(--bg-card-hover);
+  box-shadow: 0 8px 30px var(--accent-amber-glow);
+}
+
+/* Resumen interactivo (<summary>) con espacio adecuado para el icono */
+.accordion-card__summary {
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem; /* Separa el texto del icono + */
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.accordion-card__summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Estructura interna del taller */
+.workshop__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.workshop__title,
+.faq-card__question {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+  transition: color 0.2s ease;
+  flex: 1; /* Permite que el título ocupe el espacio necesario sin presionar */
+  min-width: 220px;
+}
+
+.accordion-card:hover .workshop__title,
+.accordion-card:hover .faq-card__question {
+  color: var(--accent-amber);
+}
+
+/* Badges / Etiquetas */
+.workshop__badge {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.workshop__badge--accent {
+  background: var(--accent-amber-glow);
+  color: var(--accent-amber);
+  border-color: rgba(230, 149, 57, 0.3);
+  font-weight: 600;
+}
+
+/* Icono indicador del acordeón protegido contra choques */
+.accordion-card__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Evita que el icono se deforme o comprima */
+  transition: transform 0.3s ease, background 0.2s ease, border-color 0.2s ease;
+  position: relative;
+}
+
+.accordion-card__icon::after {
+  content: '+';
+  color: var(--text-main);
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.accordion-card[open] .accordion-card__icon {
+  transform: rotate(45deg);
+  background: var(--accent-amber);
+  border-color: var(--accent-amber);
+}
+
+.accordion-card[open] .accordion-card__icon::after {
+  content: '+';
+  color: #000000;
+  font-weight: 600;
+}
+
+/* Cuerpo desplegable */
+.accordion-card__body {
+  padding: 0 2rem 2rem 2rem;
+  color: var(--text-muted);
+  font-size: 0.975rem;
+  line-height: 1.6;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+  margin-top: 0.25rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.accordion-card__body p {
+  margin: 0 0 0.75rem 0;
+}
+
+.accordion-card__body p:last-child {
+  margin-bottom: 0;
+}
+
+.accordion-card__body strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Botón de Acción Centrado */
+.cta-wrapper {
+  display: flex;
+  justify-content: center; /* Centra perfectamente el botón */
+  margin-top: 2.5rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2.5rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  text-decoration: none;
+}
+
+.button--amber {
+  background: linear-gradient(135deg, #f0a550 0%, #d48123 100%);
+  color: #0c0c0e;
+  box-shadow: 0 4px 20px rgba(230, 149, 57, 0.3);
+}
+
+.button--amber:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(230, 149, 57, 0.5);
+  background: linear-gradient(135deg, #ffb35c 0%, #e69539 100%);
+}
+
+.button__icon {
+  transition: transform 0.2s ease;
+}
+
+.button:hover .button__icon {
+  transform: translateX(4px);
+}
+
+/* Animación */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsividad para móviles */
+@media (max-width: 768px) {
+  .section-shell {
+    padding: 3rem 1rem;
+  }
+  
+  .section-heading__aside {
+    text-align: left;
+  }
+
+  .workshop__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .accordion-card__summary {
+    padding: 1.25rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .accordion-card__body {
+    padding: 0 1.25rem 1.25rem 1.25rem;
+  }
+}
