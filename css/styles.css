@@ -1983,3 +1983,268 @@ summary:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ========================================== */
+/* VARIABLES GLOBALES Y DISEÑO DE ACORDEONES  */
+/* ========================================== */
+:root {
+  --color-accent-amber: #d97706;
+  --color-accent-light: #f59e0b;
+  --color-text-main: #f3f4f6;
+  --color-text-muted: #9ca3af;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.06);
+  --border-card: rgba(255, 255, 255, 0.08);
+  --border-card-active: rgba(217, 119, 6, 0.4);
+  --radius-card: 12px;
+  --transition-speed: 0.3s ease;
+}
+
+/* Contenedor centralizado para los acordeones */
+.accordion-group {
+  max-width: 860px;
+  margin: 2.5rem auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Tarjeta individual (details) */
+.accordion-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  backdrop-filter: blur(8px);
+  transition: background-color var(--transition-speed), border-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+  overflow: hidden;
+}
+
+.accordion-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.accordion-card[open] {
+  border-color: var(--border-card-active);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Encabezado desplegable (summary) */
+.accordion-card__summary {
+  list-style: none;
+  padding: 1.25rem 1.5rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  user-select: none;
+  outline: none;
+}
+
+.accordion-card__summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion-card__summary:focus-visible {
+  outline: 2px solid var(--color-accent-amber);
+  outline-offset: -2px;
+  border-radius: var(--radius-card);
+}
+
+/* Títulos y Encabezado interno de Talleres */
+.workshop__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  width: 100%;
+}
+
+.workshop__title,
+.faq-card__question {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  line-height: 1.4;
+}
+
+.workshop__badge {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-accent-amber);
+  background: rgba(217, 119, 6, 0.12);
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  white-space: nowrap;
+}
+
+.workshop__badge--accent {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+/* Indicador SVG (+) ó Chevron animado */
+.accordion-card__icon {
+  position: relative;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.accordion-card__icon::before,
+.accordion-card__icon::after {
+  content: "";
+  position: absolute;
+  background-color: var(--color-accent-amber);
+  border-radius: 2px;
+  transition: transform var(--transition-speed);
+}
+
+/* Línea horizontal del '+' */
+.accordion-card__icon::before {
+  width: 14px;
+  height: 2px;
+}
+
+/* Línea vertical del '+' */
+.accordion-card__icon::after {
+  width: 2px;
+  height: 14px;
+}
+
+/* Animación al abrir */
+.accordion-card[open] .accordion-card__icon::after {
+  transform: rotate(90deg);
+  opacity: 0;
+}
+
+.accordion-card[open] .accordion-card__icon::before {
+  transform: rotate(180deg);
+}
+
+/* Cuerpo desplegable */
+.accordion-card__body {
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.975rem;
+  line-height: 1.65;
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.accordion-card__body p {
+  margin-top: 0.75rem;
+}
+
+.accordion-card__body p strong {
+  color: #e5e7eb;
+}
+
+/* Animación de apertura */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Botón CTA central */
+.cta-wrapper {
+  text-align: center;
+  margin-top: 2.75rem;
+}
+
+.button--amber {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #fff;
+  padding: 0.85rem 2.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.3);
+}
+
+.button--amber:hover {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.45);
+}
+
+.button__icon {
+  transition: transform var(--transition-speed);
+}
+
+.button--amber:hover .button__icon {
+  transform: translateX(4px);
+}
+
+/* Tarjeta principal con recortes y padding horizontal asegurado */
+.accordion-card {
+  background: var(--bg-card, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-card, rgba(255, 255, 255, 0.1));
+  border-radius: 12px !important;
+  overflow: hidden !important; /* Corta cualquier elemento que sobresalga de la curva */
+  box-sizing: border-box !important;
+}
+
+/* Summary con margen interior forzado a la izquierda y derecha */
+details.accordion-card > summary {
+  list-style: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1.5rem !important;
+  
+  /* PADDING HORIZONTAL: 2rem en la izquierda aleja las letras "T", "D", "C" del borde curvo */
+  padding: 1.25rem 2rem 1.25rem 2rem !important; 
+  margin: 0 !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+/* Oculta la flecha por defecto de HTML en Chrome/Safari/Firefox */
+details.accordion-card > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+/* Título con margen de seguridad propio por si acaso */
+.workshop__title {
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow-wrap: break-word !important;
+  text-indent: 0 !important; /* Garantiza que la primera letra comience donde debe */
+}
+
+/* Cuerpo desplegado con la misma alineación */
+.accordion-card__body {
+  padding: 0 2rem 1.5rem 2rem !important; /* Alineado a 2rem con el título superior */
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #ccc !important;
+}
