@@ -213,6 +213,7 @@ button {
   padding: 4rem max(calc((100vw - var(--content-width)) / 2), 8vw) 5rem;
   background:
     radial-gradient(ellipse at 70% 50%, rgb(128 0 32 / 15%), transparent 50%),
+    radial-gradient(ellipse at 8% 105%, rgb(46 73 153 / 26%), transparent 48%),
     var(--color-night);
 }
 
@@ -524,13 +525,16 @@ button {
 
 .show-grid {
   display: grid;
+  align-items: start;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.35rem;
 }
 
 .show-card {
+  --genre-color: var(--color-gold);
   overflow: hidden;
   border: 1px solid var(--color-border);
+  border-top: 3px solid var(--genre-color);
   background: var(--color-surface);
   transition:
     border-color 180ms ease,
@@ -543,6 +547,14 @@ button {
   box-shadow: var(--shadow-lg);
   transform: translateY(-4px);
 }
+
+.show-card:hover {
+  border-top-color: var(--genre-color);
+}
+
+.show-card[data-genre="drama"] { --genre-color: var(--genre-drama); }
+.show-card[data-genre="comedia"] { --genre-color: var(--genre-comedia); }
+.show-card[data-genre="musical"] { --genre-color: var(--genre-musical); }
 
 .show-card[hidden] {
   display: none;
@@ -574,6 +586,7 @@ button {
 .poster--bernarda {
   background:
     radial-gradient(ellipse at 50% 48%, rgb(212 175 55 / 17%), transparent 38%),
+    radial-gradient(ellipse at 50% 108%, rgb(205 82 65 / 38%), transparent 55%),
     linear-gradient(145deg, #3c0714, #800020 56%, #35030d);
 }
 
@@ -594,8 +607,8 @@ button {
 
 .poster--summer {
   background:
-    radial-gradient(ellipse at 50% 58%, rgb(226 177 89 / 18%), transparent 35%),
-    linear-gradient(155deg, #131c2a, #26384a 56%, #171a24);
+    radial-gradient(ellipse at 50% 58%, rgb(238 131 41 / 24%), transparent 38%),
+    linear-gradient(155deg, #0f1836, #2e4999 62%, #1b2a59);
 }
 
 .poster--summer::before {
@@ -612,14 +625,14 @@ button {
   bottom: 24%;
   left: 18%;
   height: 1px;
-  background: rgb(212 175 55 / 55%);
-  box-shadow: 0 12px 0 rgb(212 175 55 / 24%), 0 -12px 0 rgb(212 175 55 / 24%);
+  background: rgb(238 131 41 / 60%);
+  box-shadow: 0 12px 0 rgb(238 131 41 / 26%), 0 -12px 0 rgb(238 131 41 / 26%);
 }
 
 .poster--voices {
   background:
     radial-gradient(ellipse at 50% 47%, rgb(212 175 55 / 18%), transparent 38%),
-    linear-gradient(145deg, #1d2926, #34443c 55%, #151e1c);
+    linear-gradient(145deg, #0e2430, #2c7392 58%, #112733);
 }
 
 .poster--voices::before {
@@ -719,26 +732,50 @@ button {
   line-height: 1.25;
 }
 
-.show-card__body > p {
-  min-height: 3.4rem;
-  margin-top: 0.6rem;
+.show-card__author {
+  margin-top: 0.35rem;
   color: var(--color-text-muted);
-  font-size: 0.8rem;
-  line-height: 1.55;
+  font-size: 0.76rem;
+}
+
+.show-card__author span {
+  color: var(--color-text-light);
+  font-family: var(--font-primary);
+  font-size: 0.86rem;
+  font-style: italic;
+}
+
+.show-card__synopsis {
+  min-height: 4.6rem;
+  margin: 0.8rem 0 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.7;
 }
 
 .show-card__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   margin: 1rem 0;
-  padding-top: 0.8rem;
-  border-top: 1px solid var(--color-border);
   font-size: 0.72rem;
 }
 
 .show-card__date {
+  display: flex;
+  flex-direction: column;
   color: var(--color-text-light);
+}
+
+.show-card__date-label {
+  color: var(--color-text-muted);
+  font-size: 0.64rem;
+}
+
+.show-card__date time {
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .text-button {
@@ -797,7 +834,7 @@ button {
   padding: 4rem max(calc((100vw - var(--content-width)) / 2), 8vw);
   background:
     radial-gradient(ellipse at 80% 50%, rgb(212 175 55 / 8%), transparent 35%),
-    linear-gradient(110deg, #2d0712, #4a0b1c 58%, #26050e);
+    linear-gradient(110deg, #2d0712, #4a0b1c 52%, #1b2a59 135%);
 }
 
 .experience__content {
@@ -1268,7 +1305,380 @@ button {
   margin-top: 1.4rem;
 }
 
+/* =========================================================
+   RF-01 · Cartelera: etiquetas de género, acordeón y agenda
+   ========================================================= */
+
+summary:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 4px;
+}
+
+.genre-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.genre-tag::before {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--genre-color, var(--color-gold));
+  content: "";
+}
+
+.genre-tag--drama {
+  --genre-color: var(--genre-drama);
+  color: var(--color-terracotta-soft);
+}
+
+.genre-tag--comedia {
+  --genre-color: var(--genre-comedia);
+  color: var(--color-amber);
+}
+
+.genre-tag--musical {
+  --genre-color: var(--genre-musical);
+  color: var(--color-teal-soft);
+}
+
+.accordion > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion > summary::after {
+  flex: 0 0 auto;
+  color: var(--color-gold);
+  font-size: 1.25rem;
+  line-height: 1;
+  content: "+";
+  transition: transform 180ms ease;
+}
+
+.accordion[open] > summary::after {
+  transform: rotate(45deg);
+}
+
+.accordion__body {
+  padding-bottom: 1.1rem;
+}
+
+.accordion__label {
+  margin-top: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+}
+
+.show-card__more {
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.show-card__more > summary {
+  padding: 0.75rem 0;
+  color: var(--color-gold);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.show-card__more .accordion__body > p:first-child {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+.ficha {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.45rem 1rem;
+  margin-top: 1rem;
+  font-size: 0.74rem;
+}
+
+.ficha dt {
+  color: var(--color-text-muted);
+}
+
+.ficha dd {
+  margin: 0;
+}
+
+.function-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  list-style: none;
+}
+
+.function-list time {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--genre-color) 60%, transparent);
+  font-size: 0.7rem;
+}
+
+.agenda {
+  margin-top: 3.5rem;
+  padding: 0 1.4rem;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-royal);
+  background: var(--color-surface);
+}
+
+.agenda > summary {
+  padding: 1.2rem 0;
+}
+
+.agenda__title {
+  font-family: var(--font-primary);
+  font-size: 1.4rem;
+}
+
+.agenda__count {
+  margin-left: auto;
+  color: var(--color-royal-soft);
+  font-size: 0.74rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.agenda__table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.agenda__table th,
+.agenda__table td {
+  padding: 0.75rem 0.8rem 0.75rem 0;
+  border-top: 1px solid var(--color-border);
+  font-weight: 400;
+}
+
+.agenda__table thead th {
+  border-top: 0;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+}
+
+.agenda__table tbody th {
+  color: var(--color-gold);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.agenda__table tbody tr:hover {
+  background: rgb(61 97 204 / 9%);
+}
+
+.button--amber {
+  background: var(--color-amber);
+  color: var(--color-night);
+}
+
+.button--amber:hover:not(:disabled) {
+  background: #f59a4a;
+}
+
+/* Avance en video */
+.trailer-preview__video {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  object-fit: contain;
+}
+
+.trailer-preview__video[hidden] {
+  display: none;
+}
+
+.trailer-preview.has-video > :not(.trailer-preview__video) {
+  display: none;
+}
+
+/* =========================================================
+   Marcadores: espacios por completar (RF-03 y RF-04)
+   ========================================================= */
+
+.slot {
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  border: 1px dashed rgb(245 245 245 / 26%);
+  background: repeating-linear-gradient(135deg, transparent 0 12px, rgb(245 245 245 / 3%) 12px 24px);
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.slot small {
+  font-size: 0.68rem;
+}
+
+.slot--image {
+  aspect-ratio: 4 / 3;
+}
+
+.slot--form {
+  min-height: 220px;
+}
+
+.slot-text {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.slot-line {
+  display: block;
+  height: 0.55rem;
+  margin-top: 0.55rem;
+  border-radius: var(--radius-full);
+  background: rgb(245 245 245 / 9%);
+}
+
+.slot-line--short {
+  width: 60%;
+}
+
+/* RF-03 · Archivo */
+.archive {
+  padding: 7rem max(calc((100vw - var(--content-width)) / 2), 1.5rem) 6rem;
+  background: linear-gradient(180deg, var(--color-night), #131a36 45%, var(--color-night));
+}
+
+.archive-list {
+  display: grid;
+  gap: 3.5rem;
+}
+
+.archive-item {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 2.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.archive-item__figure figcaption {
+  margin-top: 0.7rem;
+  color: var(--color-text-muted);
+  font-size: 0.74rem;
+}
+
+.archive-item__figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.archive-item__content h3 {
+  font-family: var(--font-primary);
+  font-size: 1.8rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.archive-item__content header > p {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.archive-item__content h4 {
+  margin: 1.8rem 0 0.9rem;
+  color: var(--color-royal-soft);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.review-list {
+  display: grid;
+  gap: 0.9rem;
+  list-style: none;
+}
+
+.review {
+  padding: 1rem 1.15rem;
+  border-left: 2px solid var(--color-royal);
+  background: var(--color-surface);
+}
+
+.review__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.74rem;
+}
+
+.review__text {
+  margin-top: 0.4rem;
+  font-family: var(--font-primary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+/* RF-04 · Talleres */
+.workshops {
+  padding: 6.5rem max(calc((100vw - var(--content-width)) / 2), 1.5rem) 7rem;
+  background:
+    radial-gradient(ellipse at 90% 0%, rgb(61 97 204 / 28%), transparent 50%),
+    linear-gradient(160deg, var(--color-navy), #111733 100%);
+}
+
+.workshop-list {
+  max-width: 860px;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid rgb(245 245 245 / 18%);
+}
+
+.workshop {
+  border-top: 1px solid rgb(245 245 245 / 18%);
+}
+
+.workshop > summary {
+  padding: 1.15rem 0;
+}
+
+.workshop__name {
+  font-family: var(--font-primary);
+  font-size: 1.3rem;
+}
+
+.workshop__meta {
+  margin-left: auto;
+  font-size: 0.76rem;
+}
+
+.workshop .accordion__body {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 900px) {
+  .archive-item {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
   .hero {
     min-height: 590px;
     padding-inline: 6vw;
@@ -1296,6 +1706,42 @@ button {
 }
 
 @media (max-width: 620px) {
+  .archive {
+    padding: 4.5rem 1.1rem 4rem;
+  }
+
+  .workshops {
+    padding: 4.5rem 1.1rem 5rem;
+  }
+
+  .agenda {
+    margin-top: 2.5rem;
+    padding: 0 1rem;
+  }
+
+  .agenda__title {
+    font-size: 1.15rem;
+  }
+
+  .workshop__name {
+    font-size: 1.1rem;
+  }
+
+  .workshop > summary {
+    flex-wrap: wrap;
+  }
+
+  .workshop__meta {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .review__header {
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
   html {
     scroll-padding-top: 4.5rem;
   }

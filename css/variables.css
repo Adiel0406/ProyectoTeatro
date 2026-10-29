@@ -13,6 +13,24 @@
   --color-surface-raised: #242020;
   --color-border: rgb(245 245 245 / 14%);
 
+  /* Paleta ampliada: tonos de escena (se combinan con noche, borgoña y dorado) */
+  --color-amber: #ee8329;
+  --color-terracotta: #cd5241;
+  --color-teal: #2c7392;
+  --color-cobalt: #2e4999;
+  --color-royal: #3d61cc;
+  --color-navy: #1b2a59;
+
+  /* Variantes aclaradas para texto sobre fondo oscuro (contraste AA) */
+  --color-terracotta-soft: #ee907f;
+  --color-teal-soft: #74bddb;
+  --color-royal-soft: #9db1f2;
+
+  /* Color por género */
+  --genre-drama: var(--color-terracotta);
+  --genre-comedia: var(--color-amber);
+  --genre-musical: var(--color-teal);
+
   /* Tipografías */
   --font-primary: "Playfair Display", Georgia, serif;
   --font-secondary: "Lato", Arial, sans-serif;
