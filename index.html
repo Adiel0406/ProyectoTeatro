@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Descubre la cartelera de Teatro UCB y reserva tus butacas."
+    >
+    <meta name="theme-color" content="#121212">
+    <title>Teatro UCB | Cartelera y entradas</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+    <header class="site-header">
+      <a class="brand" href="#inicio" aria-label="Teatro UCB, inicio">
+        <span class="brand__mark" aria-hidden="true">T</span>
+        <span class="brand__name">TEATRO <strong>UCB</strong></span>
+      </a>
+
+      <button
+        class="nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="primary-navigation"
+        aria-label="Abrir menú"
+      >
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="site-nav" id="primary-navigation" aria-label="Navegación principal">
+        <a class="site-nav__link" href="#cartelera">Cartelera</a>
+        <a class="site-nav__link" href="#experiencia">La experiencia</a>
+        <a class="button button--small button--gold" href="#cartelera">Ver funciones</a>
+      </nav>
+    </header>
+
+    <main id="contenido">
+      <section class="hero" id="inicio" aria-labelledby="hero-title">
+        <div class="hero__content">
+          <p class="eyebrow"><span class="eyebrow__rule"></span> Temporada escénica 2026</p>
+          <h1 id="hero-title">Historias que<br><em>merecen</em> un escenario.</h1>
+          <p class="hero__description">
+            Una noche en el teatro puede cambiar la forma en que miras el mundo.
+            Encuentra tu próxima función en Teatro UCB.
+          </p>
+          <a class="button button--gold" href="#cartelera">
+            Explorar cartelera <span aria-hidden="true">↗</span>
+          </a>
+          <div class="hero__note">
+            <span class="hero__note-line" aria-hidden="true"></span>
+            <span>El telón está por levantarse</span>
+          </div>
+        </div>
+        <div class="hero__art" aria-hidden="true">
+          <div class="hero__halo"></div>
+          <div class="hero__curtain hero__curtain--left"></div>
+          <div class="hero__curtain hero__curtain--right"></div>
+          <div class="hero__stage">
+            <span class="hero__stage-light"></span>
+            <span class="hero__stage-copy">Una historia<br>comienza aquí</span>
+          </div>
+          <span class="hero__art-caption">CULTURA · ARTE · ENCUENTRO</span>
+        </div>
+        <a class="hero__scroll" href="#cartelera" aria-label="Desplazarse a la cartelera">
+          <span aria-hidden="true">↓</span>
+        </a>
+      </section>
+
+      <section class="lineup section-shell" id="cartelera" aria-labelledby="lineup-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow"><span class="eyebrow__rule"></span> En escena</p>
+            <h2 id="lineup-title">La cartelera<span class="heading-period">.</span></h2>
+          </div>
+          <p class="section-heading__aside">Elige una historia.<br>Nosotros ponemos el escenario.</p>
+        </div>
+
+        <div class="filters" aria-label="Filtros de cartelera">
+          <label class="search-field">
+            <span class="visually-hidden">Buscar obras</span>
+            <span class="search-field__icon" aria-hidden="true">⌕</span>
+            <input id="search-input" type="search" placeholder="Buscar una obra..." autocomplete="off">
+          </label>
+          <label class="select-field">
+            <span class="visually-hidden">Filtrar por género</span>
+            <select id="genre-filter">
+              <option value="all">Todos los géneros</option>
+              <option value="drama">Drama</option>
+              <option value="comedia">Comedia</option>
+              <option value="musical">Musical</option>
+            </select>
+          </label>
+          <button class="filter-reset" id="reset-filters" type="button">Limpiar filtros</button>
+        </div>
+
+        <p class="results-count" id="results-count" aria-live="polite"></p>
+        <p class="demo-note">Obras, horarios y disponibilidad de butacas con fines demostrativos.</p>
+        <div class="show-grid" id="show-grid">
+          <article class="show-card" data-title="la casa de bernarda alba" data-genre="drama">
+            <div class="show-card__poster poster poster--bernarda" role="img" aria-label="Afiche artístico en tonos borgoña y dorado">
+              <span class="poster__topline">TEATRO UCB PRESENTA</span>
+              <span class="poster__symbol" aria-hidden="true">✳</span>
+              <span class="poster__title">La casa de<br>Bernarda Alba</span>
+              <span class="poster__credit">FEDERICO GARCÍA LORCA</span>
+              <span class="poster__number">01</span>
+            </div>
+            <div class="show-card__body">
+              <div class="show-card__meta"><span>Drama</span><span>·</span><span>90 min</span></div>
+              <h3>La casa de Bernarda Alba</h3>
+              <p>Un hogar cerrado. Cinco hijas. Un deseo imposible de silenciar.</p>
+              <div class="show-card__footer">
+                <span class="show-card__date">Vie · 19:30</span>
+                <button class="text-button trailer-trigger" type="button" data-trailer="La casa de Bernarda Alba">
+                  Ver avance <span aria-hidden="true">↗</span>
+                </button>
+              </div>
+              <button class="button button--burgundy reserve-trigger" type="button" data-show="La casa de Bernarda Alba">
+                Reservar butacas <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </article>
+
+          <article class="show-card" data-title="una noche de verano" data-genre="comedia">
+            <div class="show-card__poster poster poster--summer" role="img" aria-label="Afiche artístico de una noche estrellada">
+              <span class="poster__topline">TEATRO UCB PRESENTA</span>
+              <span class="poster__moon" aria-hidden="true"></span>
+              <span class="poster__title">Una noche<br>de verano</span>
+              <span class="poster__credit">COMEDIA EN TRES ACTOS</span>
+              <span class="poster__number">02</span>
+            </div>
+            <div class="show-card__body">
+              <div class="show-card__meta"><span>Comedia</span><span>·</span><span>75 min</span></div>
+              <h3>Una noche de verano</h3>
+              <p>Una cita equivocada y demasiadas coincidencias en una sola noche.</p>
+              <div class="show-card__footer">
+                <span class="show-card__date">Sáb · 20:00</span>
+                <button class="text-button trailer-trigger" type="button" data-trailer="Una noche de verano">
+                  Ver avance <span aria-hidden="true">↗</span>
+                </button>
+              </div>
+              <button class="button button--burgundy reserve-trigger" type="button" data-show="Una noche de verano">
+                Reservar butacas <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </article>
+
+          <article class="show-card" data-title="voces del altiplano" data-genre="musical">
+            <div class="show-card__poster poster poster--voices" role="img" aria-label="Afiche artístico con formas geométricas doradas">
+              <span class="poster__topline">TEATRO UCB PRESENTA</span>
+              <span class="poster__sun" aria-hidden="true"></span>
+              <span class="poster__title">Voces del<br>Altiplano</span>
+              <span class="poster__credit">MÚSICA · MEMORIA · RAÍZ</span>
+              <span class="poster__number">03</span>
+            </div>
+            <div class="show-card__body">
+              <div class="show-card__meta"><span>Musical</span><span>·</span><span>80 min</span></div>
+              <h3>Voces del Altiplano</h3>
+              <p>Un viaje musical entre generaciones, recuerdos y paisajes andinos.</p>
+              <div class="show-card__footer">
+                <span class="show-card__date">Dom · 18:00</span>
+                <button class="text-button trailer-trigger" type="button" data-trailer="Voces del Altiplano">
+                  Ver avance <span aria-hidden="true">↗</span>
+                </button>
+              </div>
+              <button class="button button--burgundy reserve-trigger" type="button" data-show="Voces del Altiplano">
+                Reservar butacas <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </article>
+        </div>
+        <div class="empty-state" id="empty-state" hidden>
+          <span class="empty-state__icon" aria-hidden="true">✳</span>
+          <h3>No encontramos esa obra</h3>
+          <p>Prueba con otro nombre o género, o limpia los filtros.</p>
+          <button class="button button--outline" id="empty-reset" type="button">Ver toda la cartelera</button>
+        </div>
+      </section>
+
+      <section class="experience" id="experiencia" aria-labelledby="experience-title">
+        <div class="experience__content">
+          <p class="eyebrow eyebrow--light"><span class="eyebrow__rule"></span> Más que una función</p>
+          <h2 id="experience-title">El teatro se vive<br>en <em>compañía.</em></h2>
+          <p>Ven por la historia. Quédate por lo que despierta. Nos encontramos bajo el mismo telón.</p>
+          <a class="text-link" href="#cartelera">Encuentra tu próxima función <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="experience__ornament" aria-hidden="true">
+          <span class="experience__ring"></span>
+          <span class="experience__star">✳</span>
+          <span class="experience__vertical">TEATRO UNIVERSITARIO · UCB</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand brand--footer" href="#inicio">
+        <span class="brand__mark" aria-hidden="true">T</span>
+        <span class="brand__name">TEATRO <strong>UCB</strong></span>
+      </a>
+      <p>Una universidad, muchas historias.</p>
+      <span class="site-footer__copyright">© 2026 Teatro UCB · Proyecto académico</span>
+    </footer>
+
+    <dialog class="dialog" id="trailer-dialog" aria-labelledby="trailer-title">
+      <div class="dialog__panel dialog__panel--trailer">
+        <button class="dialog__close" type="button" aria-label="Cerrar avance">×</button>
+        <p class="eyebrow"><span class="eyebrow__rule"></span> Próximamente en escena</p>
+        <h2 id="trailer-title"></h2>
+        <div class="trailer-preview" id="trailer-preview">
+          <div class="trailer-preview__curtain"></div>
+          <span class="trailer-preview__symbol" aria-hidden="true">✳</span>
+          <p class="trailer-preview__message">El telón se levanta pronto</p>
+          <button class="trailer-preview__play" id="trailer-play" type="button" aria-label="Reproducir avance visual">
+            <span aria-hidden="true">▶</span>
+          </button>
+          <span class="trailer-preview__caption" id="trailer-caption" aria-live="polite">Avance visual de Teatro UCB</span>
+        </div>
+        <p class="dialog__hint">El tráiler oficial estará disponible próximamente.</p>
+      </div>
+    </dialog>
+
+    <dialog class="dialog" id="booking-dialog" aria-labelledby="booking-title">
+      <div class="dialog__panel dialog__panel--booking">
+        <button class="dialog__close" type="button" aria-label="Cerrar selección de butacas">×</button>
+        <div class="booking-heading">
+          <p class="eyebrow"><span class="eyebrow__rule"></span> Tu próxima función</p>
+          <h2 id="booking-title">Elige tus <em>butacas.</em></h2>
+          <p class="booking-show" id="booking-show"></p>
+        </div>
+        <div class="seat-layout">
+          <div class="stage-label"><span>ESCENARIO</span></div>
+          <div class="seat-map" id="seat-map" role="group" aria-label="Mapa interactivo de butacas"></div>
+          <ul class="seat-legend" aria-label="Leyenda del mapa">
+            <li><span class="seat-legend__swatch seat-legend__swatch--available"></span>Disponible</li>
+            <li><span class="seat-legend__swatch seat-legend__swatch--selected"></span>Seleccionada</li>
+            <li><span class="seat-legend__swatch seat-legend__swatch--occupied"></span>Ocupada</li>
+          </ul>
+        </div>
+        <div class="booking-summary">
+          <div class="booking-summary__details">
+            <span class="booking-summary__label">Tu selección <span id="seat-count">(0)</span></span>
+            <span class="booking-summary__seats" id="selected-seats">Selecciona hasta 4 butacas</span>
+          </div>
+          <div class="booking-summary__total">
+            <span>Total</span>
+            <strong id="booking-total">Bs 0</strong>
+          </div>
+        </div>
+        <p class="booking-feedback" id="booking-feedback" role="status" aria-live="polite"></p>
+        <button class="button button--gold button--continue" id="continue-booking" type="button" disabled>
+          Continuar con la reserva <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog" id="confirmation-dialog" aria-labelledby="confirmation-title">
+      <div class="dialog__panel dialog__panel--confirmation">
+        <button class="dialog__close" type="button" aria-label="Cerrar confirmación">×</button>
+        <span class="confirmation-mark" aria-hidden="true">✓</span>
+        <p class="eyebrow"><span class="eyebrow__rule"></span> Selección lista</p>
+        <h2 id="confirmation-title">Un gran plan<br><em>te espera.</em></h2>
+        <p id="confirmation-message"></p>
+        <p class="dialog__hint">Esta demostración no procesa pagos ni crea una reserva real.</p>
+        <button class="button button--burgundy confirmation-close" type="button">Volver a la cartelera</button>
+      </div>
+    </dialog>
+  </body>
+</html>
