@@ -534,51 +534,124 @@
            ventana modal nativa <dialog id="workshop-dialog"> para la inscripción.
            El botón con data-open-dialog abre el modal (ver js/cartelera.js).
            ===================================================================== -->
-      <section class="workshops" id="talleres" aria-labelledby="workshops-title">
-        <div class="workshops__inner">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow eyebrow--light"><span class="eyebrow__rule"></span> Súbete al escenario</p>
-              <h2 id="workshops-title">Talleres y convocatorias<span class="heading-period">.</span></h2>
-            </div>
-            <p class="section-heading__aside">Aprende, ensaya<br>y forma parte de la compañía.</p>
-          </div>
+      <!-- ========================================== -->
+<!-- SECCIÓN DE TALLERES Y CONVOCATORIAS        -->
+<!-- ========================================== -->
+<section class="lineup section-shell" id="talleres" aria-labelledby="workshops-title">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow eyebrow--light"><span class="eyebrow__rule"></span> Súbete al escenario</p>
+      <h2 id="workshops-title">Talleres y convocatorias<span class="heading-period">.</span></h2>
+    </div>
+    <p class="section-heading__aside">Aprende, ensaya<br>y forma parte de la compañía.</p>
+  </div>
 
-          <div class="workshop-list">
-            <details class="accordion workshop" name="taller">
-              <summary>
-                <span class="workshop__name slot-text">Nombre del taller o convocatoria</span>
-                <span class="workshop__meta slot-text">Fecha · Cupos</span>
-              </summary>
-              <div class="accordion__body">
-                <p class="slot-text">Descripción, requisitos, horarios y docente.</p>
-              </div>
-            </details>
-            <details class="accordion workshop" name="taller">
-              <summary>
-                <span class="workshop__name slot-text">Nombre del taller o convocatoria</span>
-                <span class="workshop__meta slot-text">Fecha · Cupos</span>
-              </summary>
-              <div class="accordion__body">
-                <p class="slot-text">Descripción, requisitos, horarios y docente.</p>
-              </div>
-            </details>
-            <details class="accordion workshop" name="taller">
-              <summary>
-                <span class="workshop__name slot-text">Nombre del taller o convocatoria</span>
-                <span class="workshop__meta slot-text">Fecha · Cupos</span>
-              </summary>
-              <div class="accordion__body">
-                <p class="slot-text">Descripción, requisitos, horarios y docente.</p>
-              </div>
-            </details>
-          </div>
-
-          <button class="button button--amber" type="button" data-open-dialog="workshop-dialog">
-            Inscribirme a un taller <span aria-hidden="true">→</span>
-          </button>
+  <div class="accordion-group">
+    <!-- Taller 1 -->
+    <details class="accordion-card workshop" name="taller">
+      <summary class="accordion-card__summary">
+        <div class="workshop__header">
+          <span class="workshop__title">Taller de Actuación y Expresión Corporal</span>
+          <span class="workshop__badge">Sábados · 15 cupos</span>
         </div>
-      </section>
+        <span class="accordion-card__icon" aria-hidden="true"></span>
+      </summary>
+      <div class="accordion-card__body">
+        <p><strong>Descripción:</strong> Explora herramientas vocales y corporales para la interpretación teatral desde cero.</p>
+        <p><strong>Requisitos:</strong> Ropa cómoda y disponibilidad horaria.</p>
+        <p><strong>Docente:</strong> Lic. Sofía Montenegro</p>
+      </div>
+    </details>
+
+    <!-- Taller 2 -->
+    <details class="accordion-card workshop" name="taller">
+      <summary class="accordion-card__summary">
+        <div class="workshop__header">
+          <span class="workshop__title">Danza Contemporánea y Movimiento</span>
+          <span class="workshop__badge">Martes y Jueves · 10 cupos</span>
+        </div>
+        <span class="accordion-card__icon" aria-hidden="true"></span>
+      </summary>
+      <div class="accordion-card__body">
+        <p><strong>Descripción:</strong> Técnica orientada al dominio espacial, fluidez corporal y montaje escénico moderno.</p>
+        <p><strong>Requisitos:</strong> Experiencia básica previa recomendada.</p>
+        <p><strong>Docente:</strong> Maestro Alejandro Ríos</p>
+      </div>
+    </details>
+
+    <!-- Convocatoria 3 -->
+    <details class="accordion-card workshop" name="taller">
+      <summary class="accordion-card__summary">
+        <div class="workshop__header">
+          <span class="workshop__title">Convocatoria: Elenco de Verano 2026</span>
+          <span class="workshop__badge workshop__badge--accent">Audiciones abiertas</span>
+        </div>
+        <span class="accordion-card__icon" aria-hidden="true"></span>
+      </summary>
+      <div class="accordion-card__body">
+        <p><strong>Descripción:</strong> Selección oficial para formar parte de la nueva temporada de puestas en escena de la UCB.</p>
+        <p><strong>Requisitos:</strong> Ser estudiante regular y presentar monólogo de 2 minutos.</p>
+        <p><strong>Dirección:</strong> Comité Artístico Teatro UCB</p>
+      </div>
+    </details>
+  </div>
+
+  <!-- Botón de Acción -->
+  <div class="cta-wrapper">
+    <button class="button button--amber" type="button" onclick="document.getElementById('dialog-taller').showModal()">
+      <span>Inscribirme a un taller</span>
+      <span class="button__icon" aria-hidden="true">→</span>
+    </button>
+  </div>
+</section>
+
+<!-- ========================================== -->
+<!-- SECCIÓN DE PREGUNTAS FRECUENTES (FAQ)      -->
+<!-- ========================================== -->
+<section class="lineup section-shell" id="faq" aria-labelledby="faq-title">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow"><span class="eyebrow__rule"></span> Información útil</p>
+      <h2 id="faq-title">Preguntas Frecuentes<span class="heading-period">.</span></h2>
+    </div>
+    <p class="section-heading__aside">Resolvemos tus dudas sobre<br>talleres y funciones.</p>
+  </div>
+
+  <div class="accordion-group">
+    <!-- FAQ 1 -->
+    <details class="accordion-card faq-card">
+      <summary class="accordion-card__summary">
+        <span class="faq-card__question">¿Necesito experiencia previa para inscribirme a los talleres?</span>
+        <span class="accordion-card__icon" aria-hidden="true"></span>
+      </summary>
+      <div class="accordion-card__body">
+        <p>No es necesario contar con experiencia previa. Nuestros talleres están diseñados tanto para principiantes como para personas con conocimientos avanzados que deseen perfeccionar su técnica escénica.</p>
+      </div>
+    </details>
+
+    <!-- FAQ 2 -->
+    <details class="accordion-card faq-card">
+      <summary class="accordion-card__summary">
+        <span class="faq-card__question">¿Cómo funcionan las convocatorias para el elenco?</span>
+        <span class="accordion-card__icon" aria-hidden="true"></span>
+      </summary>
+      <div class="accordion-card__body">
+        <p>Las convocatorias se abren al inicio de cada temporada. Al postularte mediante el formulario, el equipo de dirección se pondrá en contacto contigo para coordinar la fecha y los detalles de la audición presencial.</p>
+      </div>
+    </details>
+
+    <!-- FAQ 3 -->
+    <details class="accordion-card faq-card">
+      <summary class="accordion-card__summary">
+        <span class="faq-card__question">¿Tienen algún costo las inscripciones?</span>
+        <span class="accordion-card__icon" aria-hidden="true"></span>
+      </summary>
+      <div class="accordion-card__body">
+        <p>Los talleres dirigidos a la comunidad estudiantil de la UCB cuentan con becas y tarifas preferenciales. Puedes consultar los detalles específicos en la descripción de cada taller.</p>
+      </div>
+    </details>
+  </div>
+</section>
     </main>
 
     <footer class="site-footer">
