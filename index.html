@@ -629,26 +629,37 @@
           <h2 id="booking-title">Elige tus <em>butacas.</em></h2>
           <p class="booking-show" id="booking-show"></p>
         </div>
+        <div class="booking-function-selector" id="booking-function-selector" aria-live="polite"></div>
         <div class="seat-layout">
           <div class="stage-label"><span>ESCENARIO</span></div>
-          <div class="seat-map" id="seat-map" role="group" aria-label="Mapa interactivo de butacas"></div>
+          <figure class="seat-figure" role="region" aria-label="Mapa interactivo de butacas" tabindex="0">
+            <figcaption class="visually-hidden">Mapa de la función seleccionada</figcaption>
+            <p class="seat-stage" role="img" aria-label="Escenario">Escenario</p>
+            <div class="seat-map" id="seat-map" role="group" aria-label="Mapa del escenario"></div>
+          </figure>
           <ul class="seat-legend" aria-label="Leyenda del mapa">
-            <li><span class="seat-legend__swatch seat-legend__swatch--available"></span>Disponible</li>
-            <li><span class="seat-legend__swatch seat-legend__swatch--selected"></span>Seleccionada</li>
-            <li><span class="seat-legend__swatch seat-legend__swatch--occupied"></span>Ocupada</li>
+            <li><span class="seat-legend__swatch seat-legend__swatch--available" aria-hidden="true"></span>Disponible</li>
+            <li><span class="seat-legend__swatch seat-legend__swatch--selected" aria-hidden="true"></span>Seleccionada</li>
+            <li><span class="seat-legend__swatch seat-legend__swatch--occupied" aria-hidden="true"></span>Ocupada</li>
+            <li><span class="seat-legend__swatch seat-legend__swatch--preferred" aria-hidden="true">★</span>Preferencial</li>
+            <li><span class="seat-legend__swatch seat-legend__swatch--pillow" aria-hidden="true">◉</span>Cojín</li>
+            <li><span class="seat-legend__swatch seat-legend__swatch--sofa" aria-hidden="true">◫</span>Sofá</li>
           </ul>
         </div>
-        <div class="booking-summary">
+        <aside class="booking-summary" aria-live="polite">
           <div class="booking-summary__details">
             <span class="booking-summary__label">Tu selección <span id="seat-count">(0)</span></span>
-            <span class="booking-summary__seats" id="selected-seats">Selecciona hasta 4 butacas</span>
+            <ul class="selection-list" id="selection-list" aria-label="Butacas seleccionadas">
+              <li class="selection-list__empty">Aún no eliges butacas.</li>
+            </ul>
           </div>
           <div class="booking-summary__total">
             <span>Total</span>
             <strong id="booking-total">Bs 0</strong>
           </div>
-        </div>
-        <p class="booking-feedback" id="booking-feedback" role="status" aria-live="polite"></p>
+          <button class="button button--outline booking-summary__clear" id="clear-selection" type="button">Limpiar selección</button>
+        </aside>
+        <p class="booking-feedback" id="booking-feedback" role="status" aria-live="polite">Selecciona hasta 4 butacas</p>
         <button class="button button--gold button--continue" id="continue-booking" type="button" disabled>
           Continuar con la reserva <span aria-hidden="true">→</span>
         </button>
