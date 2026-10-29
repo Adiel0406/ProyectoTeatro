@@ -1,0 +1,276 @@
+/* ========================================== */
+/* FILTROS Y CONTROLES                       */
+/* ========================================== */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0 1.5rem;
+  align-items: center;
+}
+
+.search-field, .select-field {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.search-field:focus-within, .select-field:focus-within {
+  border-color: #d97706;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.search-field input, .select-field select {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+  width: 100%;
+}
+
+.select-field select option {
+  background: #121212;
+  color: #fff;
+}
+
+.filter-reset {
+  background: transparent;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  color: #d97706;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.filter-reset:hover {
+  background: rgba(217, 119, 6, 0.12);
+  border-color: #d97706;
+}
+
+/* ========================================== */
+/* TARJETAS DE OBRAS Y AFICHES (SHOW CARDS)   */
+/* ========================================== */
+.show-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.show-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.show-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(217, 119, 6, 0.4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.poster {
+  position: relative;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 220px;
+  background-size: cover;
+  background-position: center;
+}
+
+.poster--bernarda { background: linear-gradient(135deg, #4a121a, #1a0609); }
+.poster--summer { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); }
+.poster--voices { background: linear-gradient(135deg, #3a1c71, #d76d77, #ffaf7b); }
+
+.poster__topline { font-size: 0.7rem; letter-spacing: 0.15em; color: rgba(255,255,255,0.7); }
+.poster__title { font-size: 1.6rem; font-weight: 800; line-height: 1.1; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+.poster__credit { font-size: 0.75rem; letter-spacing: 0.1em; color: #f59e0b; font-weight: 600; }
+.poster__number { position: absolute; bottom: 1rem; right: 1.25rem; font-size: 2rem; font-weight: 900; opacity: 0.2; color: #fff; }
+
+.show-card__body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.genre-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+.genre-tag--drama { background: rgba(185, 28, 28, 0.2); color: #fca5a5; border: 1px solid rgba(185, 28, 28, 0.4); }
+.genre-tag--comedia { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+.genre-tag--musical { background: rgba(217, 119, 6, 0.2); color: #fcd34d; border: 1px solid rgba(217, 119, 6, 0.4); }
+
+.show-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.show-card__date-label { font-size: 0.75rem; color: #9ca3af; display: block; }
+.show-card__date time { font-size: 0.9rem; font-weight: 600; color: #fff; }
+
+.text-button {
+  background: transparent;
+  border: none;
+  color: #f59e0b;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+/* ========================================== */
+/* SECCIÓN ARCHIVO HISTÓRICO Y RESEÑAS (RF-03)*/
+/* ========================================== */
+.archive {
+  padding: 4rem 0;
+}
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  margin-top: 3rem;
+}
+
+.archive-item {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 2.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 868px) {
+  .archive-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+.archive-item__figure {
+  margin: 0;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  aspect-ratio: 4 / 3;
+  background: #111;
+}
+
+.archive-item__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.archive-item:hover .archive-item__img {
+  transform: scale(1.05);
+}
+
+.archive-item__figure figcaption {
+  position: absolute;
+  bottom: 0;
+  inset-x: 0;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.archive-item__tag {
+  font-size: 0.75rem;
+  color: #f59e0b;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.archive-item__content h3 {
+  font-size: 1.6rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+.archive-item__sub {
+  color: #9ca3af;
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.archive-item section {
+  margin-top: 1.75rem;
+}
+
+.archive-item h4 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #d97706;
+  margin-bottom: 1rem;
+}
+
+.review-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.review {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.review__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.review__author {
+  font-weight: 600;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.review__header time {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.review__text {
+  margin: 0;
+  font-size: 0.925rem;
+  color: #d1d5db;
+  line-height: 1.5;
+  font-style: italic;
+}
