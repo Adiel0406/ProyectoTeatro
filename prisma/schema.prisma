@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Genre {
+  DRAMA
+  COMEDIA
+  MUSICAL
+}
+
+enum SeatStatus {
+  AVAILABLE
+  RESERVED
+}
+
+model Show {
+  id          String        @id @default(uuid())
+  slug        String        @unique
+  title       String
+  synopsis    String
+  playwright  String
+  genre       Genre
+  duration    Int
+  posterStyle String
+  active      Boolean       @default(true)
+  performances Performance[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([active, genre])
+}
+
+model Performance {
+  id           String        @id @default(uuid())
+  showId       String
+  venue        String
+  startsAt     DateTime
+  show         Show          @relation(fields: [showId], references: [id], onDelete: Cascade)
+  seats        Seat[]
+  reservations Reservation[]
+  createdAt    DateTime      @default(now())
+
+  @@unique([showId, startsAt])
+  @@index([startsAt])
+}
+
+model Seat {
+  id              String           @id @default(uuid())
+  performanceId   String
+  code            String
+  category        String
+  price           Int
+  status          SeatStatus       @default(AVAILABLE)
+  performance     Performance     @relation(fields: [performanceId], references: [id], onDelete: Cascade)
+  reservationSeat ReservationSeat?
+
+  @@unique([performanceId, code])
+  @@index([performanceId, status])
+}
+
+model Reservation {
+  id             String           @id @default(uuid())
+  confirmationCode String         @unique
+  performanceId  String
+  customerName   String
+  customerEmail  String
+  totalAmount    Int
+  createdAt      DateTime         @default(now())
+  performance    Performance     @relation(fields: [performanceId], references: [id], onDelete: Restrict)
+  seats          ReservationSeat[]
+
+  @@index([customerEmail, createdAt])
+}
+
+model ReservationSeat {
+  reservationId String
+  seatId        String      @unique
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  seat          Seat        @relation(fields: [seatId], references: [id], onDelete: Restrict)
+
+  @@id([reservationId, seatId])
+}
+
+model Workshop {
+  id            String                @id @default(uuid())
+  slug          String                @unique
+  title         String
+  description   String
+  schedule      String
+  teacher       String
+  capacity      Int
+  enrolledSeats Int                   @default(0)
+  active        Boolean               @default(true)
+  applications  WorkshopApplication[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+}
+
+model WorkshopApplication {
+  id         String   @id @default(uuid())
+  workshopId String
+  name       String
+  email      String
+  createdAt  DateTime @default(now())
+  workshop   Workshop @relation(fields: [workshopId], references: [id], onDelete: Restrict)
+
+  @@unique([workshopId, email])
+  @@index([workshopId, createdAt])
+}

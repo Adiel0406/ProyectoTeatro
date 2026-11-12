@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: teatro
+      POSTGRES_PASSWORD: teatro_dev
+      POSTGRES_DB: teatro
+    ports:
+      - "55432:5432"
+    volumes:
+      - teatro-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teatro -d teatro"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  teatro-postgres:

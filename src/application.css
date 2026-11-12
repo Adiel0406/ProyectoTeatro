@@ -1,0 +1,160 @@
+.section-heading__aside {
+  white-space: pre-line;
+}
+
+.api-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid rgb(255 133 133 / 35%);
+  border-radius: var(--radius-md);
+  background: rgb(255 133 133 / 8%);
+  color: var(--color-text-light);
+}
+
+.api-alert .button {
+  min-height: 42px;
+}
+
+.sr-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+.booking-select-label,
+.reservation-fields label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.booking-select,
+.reservation-fields input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text-light);
+}
+
+.booking-select {
+  margin-top: 0.35rem;
+}
+
+.booking-select option {
+  background: var(--color-surface-raised);
+}
+
+.reservation-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.booking-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.booking-summary strong {
+  color: var(--color-gold);
+  font-size: 1.2rem;
+}
+
+.seat-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-top: 1rem;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.seat-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.form-feedback {
+  margin: 1rem 0;
+  color: var(--color-error);
+}
+
+.workshop-form {
+  grid-template-columns: 1fr;
+}
+
+.workshop-form .button {
+  justify-self: start;
+}
+
+.show-card__body > .button {
+  width: 100%;
+  margin-top: auto;
+}
+
+.show-card__date-label {
+  text-align: right;
+}
+
+.show-card__date time {
+  display: block;
+  text-transform: capitalize;
+}
+
+.poster__symbol {
+  align-self: center;
+  color: rgb(245 208 92 / 70%);
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.seat:disabled {
+  cursor: not-allowed;
+}
+
+.accordion-card__body .button {
+  margin-top: 0.5rem;
+}
+
+.lineup {
+  scroll-margin-top: 5rem;
+}
+
+@media (max-width: 620px) {
+  .reservation-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .api-alert {
+    align-items: flex-start;
+  }
+
+  .show-card__date-label {
+    text-align: left;
+  }
+}
