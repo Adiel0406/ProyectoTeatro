@@ -2,17 +2,31 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   apiRequest,
   ApiError,
+  type AuthUser,
   type Genre,
   type PerformanceDetail,
   type Show,
   type Workshop,
 } from "./api.ts";
+import { AdminDashboard } from "./AdminDashboard.tsx";
+import { AuthDialog } from "./AuthDialog.tsx";
+import { Toast, useToast } from "./Toast.tsx";
 
 const GENRE_LABELS: Record<Genre, string> = {
   drama: "Drama",
   comedia: "Comedia",
   musical: "Musical",
 };
+
+function getInitialTheme(): "dark" | "light" {
+  try {
+    const savedTheme = window.localStorage.getItem("teatro-theme");
+    if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
+  } catch {
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("es-BO", {
@@ -62,8 +76,12 @@ function App() {
   const [genre, setGenre] = useState<Genre | "all">("all");
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
-  const [announcement, setAnnouncement] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [adminPanelOpen, setAdminPanelOpen] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
+  const { toast, showToast, dismissToast } = useToast();
 
   const loadCatalog = async (signal?: AbortSignal) => {
     setLoading(true);
@@ -93,6 +111,28 @@ function App() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void apiRequest<{ user: AuthUser }>("/auth/me", { signal: controller.signal })
+      .then(({ user }) => setCurrentUser(user))
+      .catch((error: unknown) => {
+        if (error instanceof ApiError && error.status === 401) return;
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          showToast(error instanceof Error ? error.message : "No se pudo verificar la sesión.", "error");
+        }
+      });
+    return () => controller.abort();
+  }, [showToast]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    try {
+      window.localStorage.setItem("teatro-theme", theme);
+    } catch {
+      showToast("El tema cambiará, pero este navegador no permite guardarlo.", "error");
+    }
+  }, [showToast, theme]);
   const filteredShows = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("es");
     return shows.filter((show) => {
@@ -105,8 +145,18 @@ function App() {
 
   const handleReserved = async (confirmationCode: string) => {
     setSelectedShow(null);
-    setAnnouncement(`Reserva confirmada. Tu código es ${confirmationCode}.`);
+    showToast(`Reserva confirmada. Tu código es ${confirmationCode}.`);
     await loadCatalog();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest<{ message: string }>("/auth/logout", { method: "POST" });
+      setCurrentUser(null);
+      showToast("Cerraste sesión correctamente.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "No se pudo cerrar la sesión.", "error");
+    }
   };
 
   return (
@@ -147,6 +197,40 @@ function App() {
               {label}
             </a>
           ))}
+          {currentUser?.role === "ADMIN" && (
+            <button
+              className="site-nav__action"
+              type="button"
+              onClick={() => {
+                setAdminPanelOpen(true);
+                setMenuOpen(false);
+              }}
+            >
+              Panel admin
+            </button>
+          )}
+          {currentUser && <span className="site-nav__user">CI {currentUser.ci}</span>}
+          <button
+            className="button button--small button--account"
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              if (currentUser) void handleLogout();
+              else setAuthDialogOpen(true);
+            }}
+          >
+            {currentUser ? "Cerrar sesión" : "Iniciar sesión"}
+          </button>
+          <button
+            className="button button--small button--theme"
+            type="button"
+            aria-label={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+            title={theme === "dark" ? "Activar tema claro" : "Activar tema oscuro"}
+            onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+          >
+            <span aria-hidden="true">{theme === "dark" ? "☼" : "◐"}</span>
+            <span className="visually-hidden">{theme === "dark" ? "Tema claro" : "Tema oscuro"}</span>
+          </button>
           <a
             className="button button--small button--gold"
             href="#cartelera"
@@ -156,6 +240,7 @@ function App() {
           </a>
         </nav>
       </header>
+      {toast && <Toast toast={toast} onDismiss={dismissToast} />}
 
       <main id="contenido">
         <section className="hero" id="inicio" aria-labelledby="hero-title">
@@ -237,8 +322,6 @@ function App() {
               </button>
             </div>
           )}
-          {announcement && <p className="sr-status" role="status">{announcement}</p>}
-
           <div className="show-grid" aria-busy={loading}>
             {filteredShows.map((show, index) => {
               const nextPerformance = show.performances[0];
@@ -457,9 +540,26 @@ function App() {
           onClose={() => setSelectedWorkshop(null)}
           onApplied={(message) => {
             setSelectedWorkshop(null);
-            setAnnouncement(message);
+            showToast(message);
             void loadCatalog();
           }}
+        />
+      )}
+      {authDialogOpen && (
+        <AuthDialog
+          onClose={() => setAuthDialogOpen(false)}
+          onAuthenticated={(user) => {
+            setCurrentUser(user);
+            setAuthDialogOpen(false);
+            showToast(user.role === "ADMIN" ? "Sesión de administrador iniciada." : "Sesión iniciada.");
+          }}
+        />
+      )}
+      {adminPanelOpen && currentUser?.role === "ADMIN" && (
+        <AdminDashboard
+          onClose={() => setAdminPanelOpen(false)}
+          onCatalogChanged={() => void loadCatalog()}
+          notify={showToast}
         />
       )}
     </>

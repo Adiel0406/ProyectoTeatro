@@ -29,6 +29,12 @@ export interface Workshop {
   enrolledSeats: number;
 }
 
+export interface AuthUser {
+  id: string;
+  ci: string;
+  role: "USER" | "ADMIN";
+}
+
 export interface PerformanceSeat {
   id: string;
   code: string;
@@ -65,6 +71,7 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const response = await fetch(`/api${path}`, {
     ...options,
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
       ...options.headers,

@@ -4,9 +4,13 @@ html {
   scroll-padding-top: 6rem;
 }
 
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
 body {
-  background: var(--color-night);
-  color: var(--color-text-light);
+  background: var(--page-background);
+  color: var(--page-foreground);
   font-family: var(--font-secondary);
   font-size: 1rem;
   line-height: 1.6;
@@ -85,7 +89,7 @@ button {
   justify-content: space-between;
   padding: 0 clamp(1.25rem, 7vw, 7rem);
   border-bottom: 1px solid rgb(255 255 255 / 7%);
-  background: var(--color-night);
+  background: var(--page-background);
 }
 
 .brand {
@@ -131,6 +135,20 @@ button {
 
 .site-nav__link:hover {
   color: var(--color-gold);
+}
+
+.button--theme {
+  min-width: 42px;
+  justify-content: center;
+  border-color: var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-gold);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.button--theme:hover {
+  border-color: var(--color-gold);
 }
 
 .nav-toggle {
@@ -214,7 +232,7 @@ button {
   background:
     radial-gradient(ellipse at 70% 50%, rgb(128 0 32 / 15%), transparent 50%),
     radial-gradient(ellipse at 8% 105%, rgb(46 73 153 / 26%), transparent 48%),
-    var(--color-night);
+    var(--page-background);
 }
 
 .hero__content {
@@ -278,7 +296,7 @@ button {
   align-items: center;
   gap: 0.7rem;
   margin-top: 3.2rem;
-  color: #928986;
+  color: var(--color-text-muted);
   font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -450,7 +468,7 @@ button {
   min-height: 42px;
   align-items: center;
   border: 1px solid transparent;
-  background: #121111;
+  background: var(--control-background);
 }
 
 .search-field {
@@ -909,7 +927,7 @@ button {
   justify-content: space-between;
   gap: 1rem;
   padding: 1.5rem max(calc((100vw - var(--content-width)) / 2), 8vw);
-  background: #0e0d0d;
+  background: var(--page-background);
 }
 
 .brand--footer .brand__mark {
@@ -973,7 +991,7 @@ button {
   place-items: center;
   border: 1px solid var(--color-border);
   border-radius: 50%;
-  background: var(--color-night);
+  background: var(--color-surface-raised);
   color: var(--color-text-light);
   cursor: pointer;
   font-size: 1.5rem;
@@ -2492,6 +2510,48 @@ summary:focus-visible {
   color: #ffffff;
   font-weight: 600;
 }
+
+html[data-theme="light"] .section-shell {
+  background-color: var(--page-background);
+  color: var(--page-foreground);
+}
+
+html[data-theme="light"] .section-heading h2,
+html[data-theme="light"] .workshop__title,
+html[data-theme="light"] .faq-card__question,
+html[data-theme="light"] .accordion-card__body strong {
+  color: var(--page-foreground);
+}
+
+html[data-theme="light"] .archive {
+  background: linear-gradient(
+    180deg,
+    var(--page-background),
+    color-mix(in srgb, var(--page-background) 90%, var(--color-royal) 10%) 45%,
+    var(--page-background)
+  );
+}
+
+html[data-theme="light"] .workshops {
+  background:
+    radial-gradient(ellipse at 90% 0%, rgb(61 97 204 / 8%), transparent 50%),
+    linear-gradient(160deg, #f1ede7, #e9e3dc 100%);
+}
+
+html[data-theme="light"] .workshop-list,
+html[data-theme="light"] .workshop {
+  border-color: var(--color-border);
+}
+
+html[data-theme="light"] .slot {
+  border-color: var(--color-border);
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 12px,
+    rgb(40 31 25 / 3%) 12px 24px
+  );
+}
+
 
 /* Botón de Acción Centrado */
 .cta-wrapper {

@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Teatro UCB",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Teatro UCB API",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev:api"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

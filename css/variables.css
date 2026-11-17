@@ -3,6 +3,9 @@
   --color-night: #121212;
   --color-curtain: #800020;
   --color-gold: #d4af37;
+  --page-background: #121212;
+  --page-foreground: #f5f5f5;
+  --control-background: #121111;
   --color-text-light: #f5f5f5;
   --color-text-dark: #242424;
   --color-text-muted: #b7adab;
@@ -56,6 +59,32 @@
   --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.12);
   --shadow-md: 0 4px 8px rgb(0 0 0 / 0.2);
   --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.28);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page-background: #f7f4ee;
+  --page-foreground: #28221e;
+  --control-background: #fffdf9;
+  --color-gold: #8a6509;
+  --color-text-light: #28221e;
+  --color-text-dark: #28221e;
+  --color-text-muted: #645b55;
+  --color-success: #28683a;
+  --color-error: #a52c2c;
+  --color-disabled: #89817a;
+  --color-surface: #fffdf9;
+  --color-surface-raised: #f0ebe3;
+  --color-border: rgb(40 31 25 / 15%);
+  --bg-dark: #f7f4ee;
+  --bg-card: #fffdf9;
+  --bg-card-hover: #f0ebe3;
+  --accent-amber: #8a6509;
+  --accent-amber-glow: rgb(138 101 9 / 12%);
+  --text-main: #28221e;
+  --text-muted: #645b55;
+  --border-color: rgb(40 31 25 / 15%);
+  --border-color-hover: rgb(138 101 9 / 40%);
 }
 
 /* Reset universal del modelo de caja */

@@ -18,6 +18,12 @@ Aplicación full stack para consultar la cartelera, reservar butacas e inscribir
 
 Abre <http://localhost:5173>. Vite reenvía `/api` al servidor local en el puerto 3001. PostgreSQL se publica en el puerto 55432 para no interferir con servicios locales comunes.
 
+### Usuarios y administración
+
+Las cuentas se registran con CI y contraseña; el servidor guarda las contraseñas con scrypt y utiliza sesiones opacas en cookies `HttpOnly`. Los códigos de administrador son aleatorios, de un solo uso, expiran y se almacenan como hashes.
+
+Para aprovisionar el primer administrador, configura `ADMIN_CI` y `ADMIN_PASSWORD` en el entorno de la terminal y ejecuta `npm run db:seed-admin`. No incluyas credenciales reales en `.env.example`, el repositorio ni los registros de comandos compartidos. Las cuentas nuevas son usuarios normales; un administrador autenticado genera códigos de acceso desde el panel para otorgar permisos de administrador. El panel permite revisar reservas y agregar obras y funciones.
+
 ## Comandos
 
 | Comando | Uso |
@@ -28,6 +34,7 @@ Abre <http://localhost:5173>. Vite reenvía `/api` al servidor local en el puert
 | `npm run db:migrate -- --name nombre` | Crea/aplica una migración local |
 | `npm run db:deploy` | Aplica migraciones existentes en despliegues |
 | `npm run db:seed` | Inserta datos de ejemplo de forma repetible |
+| `npm run db:seed-admin` | Aprovisiona el primer administrador desde `ADMIN_CI` y `ADMIN_PASSWORD` |
 | `npm run db:studio` | Abre Prisma Studio |
 
 ## API
