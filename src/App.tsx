@@ -10,6 +10,7 @@ import {
 } from "./api.ts";
 import { AdminDashboard } from "./AdminDashboard.tsx";
 import { AuthDialog } from "./AuthDialog.tsx";
+import { WorkshopDialog } from "./WorkshopDialog.tsx";
 import { Toast, useToast } from "./Toast.tsx";
 
 const GENRE_LABELS: Record<Genre, string> = {
@@ -565,22 +566,22 @@ function App() {
                     <summary className="accordion-card__summary">
                       <div className="workshop__header">
                         <span className="workshop__title">{workshop.title}</span>
-                        <span className="workshop__badge">
-                          {workshop.schedule} · {remaining} disponibles
+                        <span className={`workshop__badge ${remaining <= 5 && remaining > 0 ? "workshop__badge--accent" : ""}`}>
+                          {workshop.schedule} · {remaining > 0 ? `${remaining} disponibles` : "Cupos agotados"}
                         </span>
                       </div>
                       <span className="accordion-card__icon" aria-hidden="true" />
                     </summary>
                     <div className="accordion-card__body">
                       <p><strong>Descripción:</strong> {workshop.description}</p>
-                      <p><strong>Docente:</strong> {workshop.teacher}</p>
+                      <p><strong>Docente a cargo:</strong> {workshop.teacher}</p>
                       <button
                         className="button button--amber"
                         type="button"
                         disabled={remaining === 0}
                         onClick={() => setSelectedWorkshop(workshop)}
                       >
-                        Inscribirme <span aria-hidden="true">→</span>
+                        {remaining === 0 ? "Sin cupos disponibles" : "Postular a la Convocatoria"} <span aria-hidden="true">→</span>
                       </button>
                     </div>
                   </details>
@@ -948,86 +949,6 @@ function BookingDialog({
             {submitting ? "Confirmando..." : "Confirmar reserva"} <span aria-hidden="true">→</span>
           </button>
           <p className="dialog__hint">No se procesa ningún pago en línea.</p>
-        </form>
-      </div>
-    </dialog>
-  );
-}
-
-function WorkshopDialog({
-  workshop,
-  onClose,
-  onApplied,
-}: {
-  workshop: Workshop;
-  onClose: () => void;
-  onApplied: (message: string) => void;
-}) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [feedback, setFeedback] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
-    return () => {
-      if (dialog?.open) dialog.close();
-    };
-  }, []);
-
-  const submitApplication = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setFeedback("");
-    try {
-      await apiRequest<{ message: string }>("/workshop-applications", {
-        method: "POST",
-        body: JSON.stringify({ workshopId: workshop.id, name, email }),
-      });
-      onApplied(`Solicitud enviada para “${workshop.title}”.`);
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "No se pudo enviar la solicitud.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <dialog className="dialog" ref={dialogRef} aria-labelledby="workshop-dialog-title" onCancel={onClose}>
-      <div className="dialog__panel dialog__panel--workshop">
-        <button className="dialog__close" type="button" aria-label="Cerrar inscripción" onClick={onClose}>×</button>
-        <p className="eyebrow"><span className="eyebrow__rule" />Inscripción</p>
-        <h2 id="workshop-dialog-title">Reserva tu <em>lugar.</em></h2>
-        <p>{workshop.title} · {workshop.schedule}</p>
-        <form className="reservation-fields workshop-form" onSubmit={(event) => void submitApplication(event)}>
-          <label>
-            Nombre completo
-            <input
-              autoComplete="name"
-              minLength={2}
-              maxLength={100}
-              required
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          <label>
-            Correo electrónico
-            <input
-              autoComplete="email"
-              type="email"
-              maxLength={254}
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </label>
-          {feedback && <p className="form-feedback" role="alert">{feedback}</p>}
-          <button className="button button--gold" type="submit" disabled={submitting}>
-            {submitting ? "Enviando..." : "Enviar solicitud"}
-          </button>
         </form>
       </div>
     </dialog>
