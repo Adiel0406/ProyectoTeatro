@@ -49,6 +49,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
   const api = express.Router();
 
   app.disable("x-powered-by");
+  if (process.env.RENDER === "true") app.set("trust proxy", 1);
   app.use(helmet());
   app.use(cors({ origin: webOrigin, credentials: true }));
   app.use((request, response, next) => {

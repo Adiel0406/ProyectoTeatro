@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: teatro-ucb
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run db:deploy && npm start
+    initialDeployHook: npm run db:seed && if [ -n "$ADMIN_CI" ] && [ -n "$ADMIN_PASSWORD" ]; then npm run db:seed-admin; fi
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_CI
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

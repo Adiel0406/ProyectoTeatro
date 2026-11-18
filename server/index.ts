@@ -21,7 +21,11 @@ const prisma = new PrismaClient({
     connectionTimeoutMillis: 5000,
   }),
 });
-const app = createApp(prisma, process.env.WEB_ORIGIN ?? "http://localhost:5173");
+const webOrigin =
+  process.env.WEB_ORIGIN ??
+  process.env.RENDER_EXTERNAL_URL ??
+  "http://localhost:5173";
+const app = createApp(prisma, webOrigin);
 
 if (process.env.NODE_ENV === "production") {
   const currentDirectory = path.dirname(fileURLToPath(import.meta.url));

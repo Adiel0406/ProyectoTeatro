@@ -14,7 +14,7 @@ Las funciones vencen automáticamente al completar la duración configurada para
 1. Copia `.env.example` a `.env`.
 2. Instala dependencias: `npm install`.
 3. Inicia PostgreSQL: `docker compose up -d db`.
-4. Crea el esquema: `npm run db:migrate -- --name init`.
+4. Aplica las migraciones existentes: `npm run db:deploy`.
 5. Carga cartelera, funciones, butacas y talleres: `npm run db:seed`.
 6. Inicia el frontend y la API: `npm run dev`.
 
@@ -55,3 +55,14 @@ La API devuelve errores con `{ "error": { "code": "...", "message": "..." } }`. 
 Configura `DATABASE_URL`, `PORT`, `NODE_ENV=production` y `WEB_ORIGIN` con valores del entorno de despliegue. Ejecuta `npm run db:deploy`, `npm run build` y `npm start`. La API compilada sirve los recursos del frontend desde `dist`.
 
 El usuario y contraseña de `docker-compose.yml` son solo para desarrollo local. Antes de aceptar datos reales, configura secretos seguros, HTTPS, política de privacidad/retención y controles operativos adecuados para el despliegue.
+
+### Publicación compartida en Render
+
+El archivo `render.yaml` configura un servicio web de Render que compila y sirve el frontend y la API bajo el mismo dominio. Para publicarlo:
+
+1. Crea una base PostgreSQL administrada (por ejemplo, en Neon) y copia la URL de conexión directa con SSL habilitado. No uses las credenciales locales de `docker-compose.yml`.
+2. En Render, crea un **Blueprint** desde este repositorio y la rama `main`. Render detectará `render.yaml`; introduce la URL y las credenciales iniciales solicitadas como secretos `DATABASE_URL`, `ADMIN_CI` y `ADMIN_PASSWORD`.
+3. Usa una contraseña administrativa única y segura; estos valores solo se configuran en Render, no en Git ni en el navegador.
+4. Render desplegará la app y mostrará una URL pública `https://<nombre-del-servicio>.onrender.com`. Comparte ese enlace; los usuarios usarán la misma API y base de datos. El primer deploy carga también los datos de ejemplo.
+
+El *Blueprint* no contiene credenciales. Las migraciones se aplican al iniciar el servicio. El administrador inicial se crea solo en el hook del primer deploy cuando ambas variables de admin están configuradas. El plan gratuito de Render puede suspender servicios inactivos; la disponibilidad y límites de la base dependen del proveedor PostgreSQL elegido.
