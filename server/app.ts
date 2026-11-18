@@ -19,6 +19,7 @@ import {
 import { createOpaqueToken, hashPassword, hashToken, verifyPassword } from "./security.ts";
 
 class SeatsUnavailableError extends Error {}
+class PerformanceUnavailableError extends Error {}
 class WorkshopUnavailableError extends Error {}
 class AccessCodeInvalidError extends Error {}
 
@@ -268,6 +269,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
           id: performance.id,
           venue: performance.venue,
           startsAt: performance.startsAt,
+          endsAt: performance.endsAt,
           show: performance.show,
         },
         seatCodes: seats.map(({ seat }) => seat.code).sort(),
@@ -280,7 +282,6 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       orderBy: [{ active: "desc" }, { title: "asc" }],
       include: {
         performances: {
-          where: { startsAt: { gte: new Date() } },
           orderBy: { startsAt: "asc" },
           include: { seats: { select: { status: true } } },
         },
@@ -376,10 +377,13 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       standardPrice: number;
       preferredPrice: number;
     },
+    duration: number,
   ) {
+    const startsAt = new Date(input.startsAt);
+    const endsAt = new Date(startsAt.getTime() + duration * 60_000);
     const performance = await transaction.performance.create({
-      data: { showId, startsAt: new Date(input.startsAt), venue: input.venue },
-      select: { id: true, startsAt: true, venue: true },
+      data: { showId, startsAt, endsAt, venue: input.venue },
+      select: { id: true, startsAt: true, endsAt: true, venue: true },
     });
     const seats = SEAT_ROWS.flatMap((row) =>
       Array.from({ length: SEATS_PER_ROW }, (_, index) => {
@@ -423,7 +427,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
         },
         select: { id: true, title: true },
       });
-      const performance = await createPerformance(transaction, show.id, input);
+      const performance = await createPerformance(transaction, show.id, input, input.duration);
       return { show, performance };
     });
 
@@ -435,7 +439,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     const input = createPerformanceSchema.parse(request.body);
     const show = await prisma.show.findUnique({
       where: { id: showId },
-      select: { id: true, active: true },
+      select: { id: true, active: true, duration: true },
     });
     if (!show?.active) {
       response.status(404).json({
@@ -446,7 +450,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
 
     try {
       const performance = await prisma.$transaction((transaction) =>
-        createPerformance(transaction, show.id, input),
+        createPerformance(transaction, show.id, input, show.duration),
       );
       response.status(201).json({ performance });
     } catch (error) {
@@ -471,7 +475,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       orderBy: { title: "asc" },
       include: {
         performances: {
-          where: { startsAt: { gte: new Date() } },
+          where: { startsAt: { gte: new Date() }, endsAt: { gt: new Date() } },
           orderBy: { startsAt: "asc" },
           include: { seats: { select: { status: true } } },
         },
@@ -515,6 +519,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
         id: true,
         venue: true,
         startsAt: true,
+        endsAt: true,
         show: { select: { title: true } },
         seats: {
           orderBy: [{ code: "asc" }],
@@ -523,7 +528,11 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       },
     });
 
-    if (!performance || performance.startsAt < new Date()) {
+    if (
+      !performance ||
+      performance.startsAt <= new Date() ||
+      performance.endsAt <= new Date()
+    ) {
       response.status(404).json({
         error: { code: "PERFORMANCE_NOT_FOUND", message: "La función ya no está disponible." },
       });
@@ -548,10 +557,14 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
         const reservation = await prisma.$transaction(async (transaction) => {
           const performance = await transaction.performance.findUnique({
             where: { id: input.performanceId },
-            select: { id: true, startsAt: true },
+            select: { id: true, startsAt: true, endsAt: true },
           });
-          if (!performance || performance.startsAt < new Date()) {
-            throw new SeatsUnavailableError();
+          if (
+            !performance ||
+            performance.startsAt <= new Date() ||
+            performance.endsAt <= new Date()
+          ) {
+            throw new PerformanceUnavailableError();
           }
 
           const seats = await transaction.seat.findMany({
@@ -605,6 +618,15 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
           seatCodes: reservation.seats.map(({ seat }) => seat.code),
         });
       } catch (error) {
+        if (error instanceof PerformanceUnavailableError) {
+          response.status(409).json({
+            error: {
+              code: "PERFORMANCE_EXPIRED",
+              message: "La función ya comenzó o venció y no admite nuevas reservas.",
+            },
+          });
+          return;
+        }
         if (error instanceof SeatsUnavailableError || isPrismaCode(error, "P2002")) {
           response.status(409).json({
             error: {

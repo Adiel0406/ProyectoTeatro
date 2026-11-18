@@ -69,5 +69,6 @@ describe("account and administrator schemas", () => {
     };
     expect(createShowSchema.safeParse(show).success).toBe(true);
     expect(createShowSchema.safeParse({ ...show, startsAt: "2000-01-01T00:00:00.000Z" }).success).toBe(false);
+    expect(createShowSchema.safeParse({ ...show, startsAt: "not-a-date" }).success).toBe(false);
   });
 });

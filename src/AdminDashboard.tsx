@@ -12,6 +12,7 @@ interface AdminReservation {
   performance: {
     venue: string;
     startsAt: string;
+    endsAt: string;
     show: { title: string };
   };
   seatCodes: string[];
@@ -132,6 +133,12 @@ export function AdminDashboard({
 
   const reservedAmount = reservations.reduce(
     (total, reservation) => total + reservation.totalAmount,
+    0,
+  );
+  const activePerformances = adminShows.reduce(
+    (total, show) => total + show.performances.filter((item) =>
+      new Date(item.endsAt).getTime() > Date.now(),
+    ).length,
     0,
   );
   const activeAccessCodes = accessCodes.filter((item) =>
@@ -312,6 +319,11 @@ export function AdminDashboard({
             <span>Obras publicadas</span>
             <strong>{adminShows.filter((show) => show.active).length}</strong>
             <small>De {adminShows.length} en el archivo</small>
+          </article>
+          <article className="admin-metric">
+            <span>Funciones vigentes</span>
+            <strong>{activePerformances}</strong>
+            <small>Se ocultan al terminar su duración</small>
           </article>
           <article className="admin-metric">
             <span>Invitaciones activas</span>
@@ -496,7 +508,25 @@ export function AdminDashboard({
                 <article className="admin-show-row" key={show.id}>
                   <div>
                     <strong>{show.title}</strong>
-                    <span>{show.performances.length} funciones futuras · {show.active ? "Publicada" : "Archivada"}</span>
+                    <span>{show.performances.filter((item) => new Date(item.endsAt).getTime() > Date.now()).length} funciones vigentes · {show.active ? "Publicada" : "Archivada"}</span>
+                    {show.performances.length > 0 && (
+                      <details className="admin-performance-details">
+                        <summary>Ver funciones y vencimientos</summary>
+                        <ul>
+                          {show.performances.map((item) => {
+                            const expired = new Date(item.endsAt).getTime() <= Date.now();
+                            return (
+                              <li key={item.id}>
+                                <span>{formatPerformanceDate(item.startsAt)} · {item.venue}</span>
+                                <time dateTime={item.endsAt}>
+                                  {expired ? "Vencida" : `Vence ${formatPerformanceDate(item.endsAt)}`}
+                                </time>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </details>
+                    )}
                   </div>
                   <button
                     className={`button ${show.active ? "button--outline" : "button--gold"}`}
@@ -546,6 +576,7 @@ export function AdminDashboard({
             <label>
               Fecha y hora
               <input name="startsAt" type="datetime-local" required />
+              <span className="admin-form__hint">El vencimiento se calcula automáticamente según la duración de la obra.</span>
             </label>
             <label>
               Sala
@@ -588,6 +619,7 @@ export function AdminDashboard({
               <label>
                 Fecha y hora
                 <input name="startsAt" type="datetime-local" required />
+                <span className="admin-form__hint">El vencimiento se calcula con la duración configurada para la obra.</span>
               </label>
               <label>
                 Sala

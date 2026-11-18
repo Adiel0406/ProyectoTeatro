@@ -84,6 +84,7 @@ model Performance {
   showId       String
   venue        String
   startsAt     DateTime
+  endsAt       DateTime
   show         Show          @relation(fields: [showId], references: [id], onDelete: Cascade)
   seats        Seat[]
   reservations Reservation[]
@@ -91,6 +92,7 @@ model Performance {
 
   @@unique([showId, startsAt])
   @@index([startsAt])
+  @@index([endsAt])
 }
 
 model Seat {

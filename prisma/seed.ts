@@ -87,10 +87,11 @@ async function seed() {
 
     for (const date of dates) {
       const startsAt = new Date(date);
+      const endsAt = new Date(startsAt.getTime() + show.duration * 60_000);
       const performance = await prisma.performance.upsert({
         where: { showId_startsAt: { showId: show.id, startsAt } },
-        update: { venue: "Sala principal" },
-        create: { showId: show.id, venue: "Sala principal", startsAt },
+        update: { venue: "Sala principal", endsAt },
+        create: { showId: show.id, venue: "Sala principal", startsAt, endsAt },
       });
 
       const seats = Array.from({ length: 32 }, (_, index) => {

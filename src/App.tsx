@@ -28,6 +28,26 @@ function getInitialTheme(): "dark" | "light" {
   return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
+function getInitialFavorites(): string[] {
+  try {
+    const savedFavorites = window.localStorage.getItem("teatro-favorites");
+    const parsed: unknown = savedFavorites ? JSON.parse(savedFavorites) : [];
+    return Array.isArray(parsed) && parsed.every((id) => typeof id === "string")
+      ? parsed
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function getInitialFavoritesOnly(): boolean {
+  try {
+    return window.localStorage.getItem("teatro-favorites-only") === "true";
+  } catch {
+    return false;
+  }
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("es-BO", {
     weekday: "short",
@@ -77,10 +97,14 @@ function App() {
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("cartelera");
+  const [favorites, setFavorites] = useState<string[]>(getInitialFavorites);
+  const [favoritesOnly, setFavoritesOnly] = useState(getInitialFavoritesOnly);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
+  const headerRef = useRef<HTMLElement>(null);
   const { toast, showToast, dismissToast } = useToast();
 
   const loadCatalog = async (signal?: AbortSignal) => {
@@ -125,23 +149,80 @@ function App() {
   }, [showToast]);
 
   useEffect(() => {
+    const sections = ["cartelera", "experiencia", "archivo", "talleres"]
+      .map((id) => document.getElementById(id))
+      .filter((section): section is HTMLElement => section !== null);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
+        if (visible) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-22% 0px -62% 0px", threshold: [0, 0.2, 0.5] },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !headerRef.current?.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      "content",
+      theme === "dark" ? "#121212" : "#f7f4ee",
+    );
     try {
       window.localStorage.setItem("teatro-theme", theme);
     } catch {
       showToast("El tema cambiará, pero este navegador no permite guardarlo.", "error");
     }
   }, [showToast, theme]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("teatro-favorites", JSON.stringify(favorites));
+      window.localStorage.setItem("teatro-favorites-only", String(favoritesOnly));
+    } catch {
+      showToast("No se pudieron guardar tus preferencias de cartelera en este navegador.", "error");
+    }
+  }, [favorites, favoritesOnly, showToast]);
+
   const filteredShows = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("es");
     return shows.filter((show) => {
       const matchesSearch = `${show.title} ${show.playwright}`
         .toLocaleLowerCase("es")
         .includes(query);
-      return matchesSearch && (genre === "all" || show.genre === genre);
+      const matchesGenre = genre === "all" || show.genre === genre;
+      const matchesFavorites = !favoritesOnly || favorites.includes(show.id);
+      return matchesSearch && matchesGenre && matchesFavorites;
     });
-  }, [genre, search, shows]);
+  }, [favorites, favoritesOnly, genre, search, shows]);
+
+  const toggleFavorite = (showId: string) => {
+    setFavorites((current) => current.includes(showId)
+      ? current.filter((id) => id !== showId)
+      : [...current, showId]);
+  };
 
   const handleReserved = async (confirmationCode: string) => {
     setSelectedShow(null);
@@ -162,9 +243,9 @@ function App() {
   return (
     <>
       <a className="skip-link" href="#contenido">Saltar al contenido</a>
-      <header className="site-header">
+      <header className="site-header" ref={headerRef}>
         <a className="brand" href="#inicio" aria-label="Teatro UCB, inicio">
-          <span className="brand__mark" aria-hidden="true">T</span>
+          <img className="brand__mark" src="/teatro-ucb.svg" alt="" />
           <span className="brand__name">TEATRO <strong>UCB</strong></span>
         </a>
         <button
@@ -189,9 +270,10 @@ function App() {
             ["Talleres", "#talleres"],
           ].map(([label, href]) => (
             <a
-              className="site-nav__link"
+              className={`site-nav__link${activeSection === href.slice(1) ? " is-active" : ""}`}
               href={href}
               key={href}
+              aria-current={activeSection === href.slice(1) ? "location" : undefined}
               onClick={() => setMenuOpen(false)}
             >
               {label}
@@ -236,7 +318,7 @@ function App() {
             href="#cartelera"
             onClick={() => setMenuOpen(false)}
           >
-            Ver funciones
+            Reservar
           </a>
         </nav>
       </header>
@@ -303,6 +385,15 @@ function App() {
               </select>
             </label>
             <button
+              className={`filter-favorites${favoritesOnly ? " is-active" : ""}`}
+              type="button"
+              aria-pressed={favoritesOnly}
+              onClick={() => setFavoritesOnly((current) => !current)}
+            >
+              <span aria-hidden="true">♡</span>
+              Favoritas <span className="filter-favorites__count">{favorites.length}</span>
+            </button>
+            <button
               className="filter-reset"
               type="button"
               onClick={() => { setSearch(""); setGenre("all"); }}
@@ -326,17 +417,31 @@ function App() {
             {filteredShows.map((show, index) => {
               const nextPerformance = show.performances[0];
               return (
-                <article className="show-card" data-genre={show.genre} key={show.id}>
+                <article
+                  className="show-card"
+                  data-genre={show.genre}
+                  aria-label={`Obra: ${show.title}`}
+                  key={show.id}
+                >
                   <div
                     className={`show-card__poster poster poster--${show.posterStyle}`}
-                    role="img"
-                    aria-label={`Afiche de ${show.title}`}
                   >
                     <span className="poster__topline">TEATRO UCB PRESENTA</span>
                     <span className="poster__symbol" aria-hidden="true">✳</span>
                     <span className="poster__title">{show.title}</span>
                     <span className="poster__credit">{show.playwright}</span>
                     <span className="poster__number">{String(index + 1).padStart(2, "0")}</span>
+                    <button
+                      className={`favorite-toggle${favorites.includes(show.id) ? " is-active" : ""}`}
+                      type="button"
+                      aria-label={favorites.includes(show.id)
+                        ? `Quitar ${show.title} de favoritas`
+                        : `Guardar ${show.title} en favoritas`}
+                      aria-pressed={favorites.includes(show.id)}
+                      onClick={() => toggleFavorite(show.id)}
+                    >
+                      {favorites.includes(show.id) ? "♥" : "♡"}
+                    </button>
                   </div>
                   <div className="show-card__body">
                     <div className="show-card__meta">
@@ -355,6 +460,14 @@ function App() {
                         <time dateTime={nextPerformance?.startsAt}>
                           {nextPerformance ? formatDate(nextPerformance.startsAt) : "Próximamente"}
                         </time>
+                        {nextPerformance && (
+                          <span className="show-card__expiry">
+                            Hasta {new Intl.DateTimeFormat("es-BO", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }).format(new Date(nextPerformance.endsAt))}
+                          </span>
+                        )}
                       </span>
                       <span className="show-card__date-label">
                         {nextPerformance ? `${nextPerformance.availableSeats} butacas` : "Sin funciones"}
@@ -377,7 +490,9 @@ function App() {
             <div className="empty-state">
               <span className="empty-state__icon" aria-hidden="true">✳</span>
               <h3>No encontramos esa obra</h3>
-              <p>Prueba con otro nombre o género, o limpia los filtros.</p>
+              <p>{favoritesOnly && favorites.length === 0
+                ? "Guarda una obra con el corazón para encontrarla aquí."
+                : "Prueba con otro nombre o género, o limpia los filtros."}</p>
               <button
                 className="button button--outline"
                 type="button"
@@ -518,7 +633,7 @@ function App() {
 
       <footer className="site-footer">
         <a className="brand brand--footer" href="#inicio">
-          <span className="brand__mark" aria-hidden="true">T</span>
+          <img className="brand__mark" src="/teatro-ucb.svg" alt="" />
           <span className="brand__name">TEATRO <strong>UCB</strong></span>
         </a>
         <p>Una universidad, muchas historias.</p>
@@ -751,7 +866,10 @@ function BookingDialog({
           >
             {show.performances.map((item) => (
               <option value={item.id} key={item.id}>
-                {formatDate(item.startsAt)} · {item.venue} · {item.availableSeats} disponibles
+                {formatDate(item.startsAt)} · termina {new Intl.DateTimeFormat("es-BO", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date(item.endsAt))} · {item.venue} · {item.availableSeats} disponibles
               </option>
             ))}
           </select>

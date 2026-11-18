@@ -2,6 +2,8 @@
 
 Aplicación full stack para consultar la cartelera, reservar butacas e inscribirse a talleres. El frontend usa React + TypeScript; la API usa Express y valida entradas con Zod; PostgreSQL almacena funciones, disponibilidad y solicitudes mediante Prisma.
 
+Las funciones vencen automáticamente al completar la duración configurada para la obra; después se ocultan de la cartelera y ya no aceptan reservas. El tema y las obras favoritas se guardan en el navegador.
+
 ## Requisitos
 
 - Node.js 20.19+ o 22.12+
@@ -40,7 +42,7 @@ Para aprovisionar el primer administrador, configura `ADMIN_CI` y `ADMIN_PASSWOR
 ## API
 
 - `GET /api/health`: comprueba la conexión a la base de datos.
-- `GET /api/shows`: cartelera y próximas funciones.
+- `GET /api/shows`: cartelera y funciones futuras aún vigentes, con hora de inicio y vencimiento.
 - `GET /api/workshops`: talleres activos y cupos.
 - `GET /api/performances/:id/seats`: mapa y disponibilidad de butacas.
 - `POST /api/reservations`: crea una reserva atómica (1–4 butacas).

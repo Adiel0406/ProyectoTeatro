@@ -4,6 +4,7 @@ export interface PerformanceSummary {
   id: string;
   venue: string;
   startsAt: string;
+  endsAt: string;
   availableSeats: number;
 }
 
@@ -47,6 +48,7 @@ export interface PerformanceDetail {
   id: string;
   venue: string;
   startsAt: string;
+  endsAt: string;
   show: { title: string };
   seats: PerformanceSeat[];
 }
