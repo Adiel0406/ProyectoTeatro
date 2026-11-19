@@ -6,17 +6,37 @@ Las funciones vencen automáticamente al completar la duración configurada para
 
 ## Requisitos
 
-- Node.js 20.19+ o 22.12+
+- Node.js 24.22.1 y npm 11.19.1
 - Docker Compose
+- Git
+
+Las versiones exactas están fijadas en `package.json`, `package-lock.json` y `.nvmrc`. Para evitar que dos máquinas resuelvan paquetes distintos, no uses `npm install` para actualizar el entorno local: usa `npm ci`.
+
+Con nvm:
+
+```bash
+nvm install
+nvm use
+npm ci
+npm run verify
+```
 
 ## Desarrollo local
 
 1. Copia `.env.example` a `.env`.
-2. Instala dependencias: `npm install`.
+2. Instala exactamente las dependencias bloqueadas: `npm ci`.
 3. Inicia PostgreSQL: `docker compose up -d db`.
 4. Aplica las migraciones existentes: `npm run db:deploy`.
 5. Carga cartelera, funciones, butacas y talleres: `npm run db:seed`.
 6. Inicia el frontend y la API en desarrollo: `npm run dev`.
+
+Como alternativa, después de crear `.env`, puedes preparar todo el entorno local con:
+
+```bash
+npm run setup
+```
+
+Ese comando usa `npm ci`, inicia PostgreSQL, aplica las migraciones y carga los datos de ejemplo.
 
 Abre <http://localhost:5173>. Vite reenvía `/api` al servidor local en el puerto 3001. PostgreSQL se publica en el puerto 55432 para no interferir con servicios locales comunes.
 
@@ -34,6 +54,8 @@ Para aprovisionar el primer administrador, configura `ADMIN_CI` y `ADMIN_PASSWOR
 | --- | --- |
 | `npm run dev` | Frontend y API en modo desarrollo |
 | `npm run build` | Genera Prisma y compila frontend, API y tipos TypeScript |
+| `npm run setup` | Instala dependencias bloqueadas y prepara la base local |
+| `npm run verify` | Comprueba Node, npm, el bloque de dependencias y `.env` |
 | `npm test` | Ejecuta pruebas de validación |
 | `npm run db:migrate -- --name nombre` | Crea/aplica una migración local |
 | `npm run db:deploy` | Aplica migraciones existentes en despliegues |
@@ -57,6 +79,18 @@ La API devuelve errores con `{ "error": { "code": "...", "message": "..." } }`. 
 Configura `DATABASE_URL`, `PORT` y `WEB_ORIGIN` con valores del entorno de despliegue. Ejecuta `npm run db:deploy`, `npm run build` y `npm start`. La API compilada sirve los recursos del frontend desde `dist`.
 
 El usuario y contraseña de `docker-compose.yml` son solo para desarrollo local. Antes de aceptar datos reales, configura secretos seguros, HTTPS, política de privacidad/retención y controles operativos adecuados para el despliegue.
+
+## Si las máquinas muestran versiones diferentes
+
+No basta con que el código sea igual: cada máquina puede tener paquetes, navegador o datos locales distintos.
+
+1. Haz `git pull --ff-only origin main`.
+2. Ejecuta `nvm install && nvm use`.
+3. Ejecuta `npm ci` y `npm run verify`.
+4. Ejecuta `npm run db:deploy` y reinicia con `npm run dev`.
+5. Actualiza el navegador con recarga fuerte o abre una sesión privada si quedaron archivos compilados en caché.
+
+Cada computadora que usa el `docker-compose.yml` tiene su propia base PostgreSQL y su propio volumen. Las reservas, usuarios y talleres pueden verse diferentes. Para compartir exactamente los mismos datos, todas las máquinas deben configurar el mismo `DATABASE_URL` de una base PostgreSQL compartida, como la administrada usada en Render. No copies contraseñas reales en el repositorio ni en `.env.example`.
 
 ### Publicación compartida en Render
 
