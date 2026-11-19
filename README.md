@@ -16,9 +16,11 @@ Las funciones vencen automáticamente al completar la duración configurada para
 3. Inicia PostgreSQL: `docker compose up -d db`.
 4. Aplica las migraciones existentes: `npm run db:deploy`.
 5. Carga cartelera, funciones, butacas y talleres: `npm run db:seed`.
-6. Inicia el frontend y la API: `npm run dev`.
+6. Inicia el frontend y la API en desarrollo: `npm run dev`.
 
 Abre <http://localhost:5173>. Vite reenvía `/api` al servidor local en el puerto 3001. PostgreSQL se publica en el puerto 55432 para no interferir con servicios locales comunes.
+
+Para probar la versión compilada, ejecuta `npm run build` y después `npm start`; abre la dirección indicada por la API (por defecto, <http://localhost:3001>). `npm start` configura el modo de producción para servir la interfaz desde `dist`, aunque `.env` tenga `NODE_ENV=development`. Usa `npm run dev` para desarrollo con recarga en caliente.
 
 ### Usuarios y administración
 
@@ -52,7 +54,7 @@ La API devuelve errores con `{ "error": { "code": "...", "message": "..." } }`. 
 
 ## Producción
 
-Configura `DATABASE_URL`, `PORT`, `NODE_ENV=production` y `WEB_ORIGIN` con valores del entorno de despliegue. Ejecuta `npm run db:deploy`, `npm run build` y `npm start`. La API compilada sirve los recursos del frontend desde `dist`.
+Configura `DATABASE_URL`, `PORT` y `WEB_ORIGIN` con valores del entorno de despliegue. Ejecuta `npm run db:deploy`, `npm run build` y `npm start`. La API compilada sirve los recursos del frontend desde `dist`.
 
 El usuario y contraseña de `docker-compose.yml` son solo para desarrollo local. Antes de aceptar datos reales, configura secretos seguros, HTTPS, política de privacidad/retención y controles operativos adecuados para el despliegue.
 
