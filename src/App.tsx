@@ -10,8 +10,16 @@ import {
 } from "./api.ts";
 import { AdminDashboard } from "./AdminDashboard.tsx";
 import { AuthDialog } from "./AuthDialog.tsx";
+import { INFO_PAGES } from "./infoPages.ts";
 import { WorkshopDialog } from "./WorkshopDialog.tsx";
 import { Toast, useToast } from "./Toast.tsx";
+import bodasDeSangre from "../assets/image/bodasdesangre.jpg";
+import cepilloDeDientes from "../assets/image/cepillodedientes.jpeg";
+import obra1 from "../assets/image/obra1.jpg";
+import obra2 from "../assets/image/obra2.jpg";
+import obra3 from "../assets/image/obra3.jpg";
+import obra4 from "../assets/image/obra 4.jpg";
+import { useScrollReveal } from "./useScrollReveal.ts";
 
 const GENRE_LABELS: Record<Genre, string> = {
   drama: "Drama",
@@ -75,7 +83,7 @@ function SectionHeading({
   headingId: string;
 }) {
   return (
-    <div className="section-heading">
+    <div className="section-heading" data-scroll-reveal>
       <div>
         <p className="eyebrow">
           <span className="eyebrow__rule" />
@@ -219,6 +227,12 @@ function App() {
     });
   }, [favorites, favoritesOnly, genre, search, shows]);
 
+  const revealRevision = [
+    filteredShows.map((show) => show.id).join(":"),
+    workshops.map((workshop) => workshop.id).join(":"),
+  ].join("|");
+  useScrollReveal(revealRevision);
+
   const toggleFavorite = (showId: string) => {
     setFavorites((current) => current.includes(showId)
       ? current.filter((id) => id !== showId)
@@ -280,6 +294,14 @@ function App() {
               {label}
             </a>
           ))}
+          <details className="site-nav__pages">
+            <summary className="site-nav__link">Descubre</summary>
+            <div className="site-nav__submenu">
+              {INFO_PAGES.map((page) => (
+                <a href={page.path} key={page.slug}>{page.label}</a>
+              ))}
+            </div>
+          </details>
           {currentUser?.role === "ADMIN" && (
             <button
               className="site-nav__action"
@@ -421,6 +443,7 @@ function App() {
                 <article
                   className="show-card"
                   data-genre={show.genre}
+                  data-scroll-reveal
                   aria-label={`Obra: ${show.title}`}
                   key={show.id}
                 >
@@ -506,13 +529,13 @@ function App() {
         </section>
 
         <section className="experience" id="experiencia" aria-labelledby="experience-title">
-          <div className="experience__content">
+          <div className="experience__content" data-scroll-reveal>
             <p className="eyebrow eyebrow--light"><span className="eyebrow__rule" />Más que una función</p>
             <h2 id="experience-title">El teatro se vive<br />en <em>compañía.</em></h2>
             <p>Ven por la historia. Quédate por lo que despierta. Nos encontramos bajo el mismo telón.</p>
             <a className="text-link" href="#cartelera">Encuentra tu próxima función <span aria-hidden="true">↗</span></a>
           </div>
-          <div className="experience__ornament" aria-hidden="true">
+          <div className="experience__ornament" data-scroll-reveal aria-hidden="true">
             <span className="experience__ring" />
             <span className="experience__star">✳</span>
             <span className="experience__vertical">TEATRO UNIVERSITARIO · UCB</span>
@@ -525,26 +548,82 @@ function App() {
               headingId="archive-title"
               eyebrow="Archivo histórico"
               title="Obras pasadas"
-              aside={"Lo que ya pasó por el escenario\ny lo que dijo el público."}
+              aside={"Postales de las obras\ny momentos que dejaron huella."}
             />
+            <p className="archive__note">
+              Las impresiones de las obras nuevas son textos editoriales de muestra, no citas reales del público.
+            </p>
             <div className="archive-list">
               <ArchiveItem
-                image="/assets/image/bodasdesangre.jpg"
+                image={bodasDeSangre}
                 alt="Puesta en escena de Bodas de Sangre"
+                tag="Temporada 2025"
                 date="Octubre 2025"
                 title="Bodas de Sangre"
                 credit="Federico García Lorca · Elenco Universitario UCB"
+                description="La tragedia de García Lorca llega al escenario en un montaje atravesado por el deseo, el destino y la tradición."
                 review="Una interpretación visceral e impactante. El uso de la iluminación y la escenografía transmite toda la tensión dramática."
                 author="Camila A. Muñoz"
+                poster
               />
               <ArchiveItem
-                image="/assets/image/cepillodedientes.jpeg"
+                image={cepilloDeDientes}
                 alt="Montaje escénico de El Cepillo de Dientes"
+                tag="Temporada 2025"
                 date="Mayo 2025"
                 title="El Cepillo de Dientes"
                 credit="Jorge Díaz · Dirección: Lic. Sofía Montenegro"
+                description="Una pareja convierte la rutina doméstica en un juego absurdo que transforma lo cotidiano en comedia."
                 review="Una comedia absurda y efervescente. El ritmo no decae y las actuaciones llenan la sala."
                 author="Alison Márquez"
+              />
+              <ArchiveItem
+                image={obra1}
+                alt="Afiche de Willy Flores, segundo Premio Nacional de Teatro de Instituciones de Educación Superior"
+                tag="Reconocimiento"
+                date="2024"
+                title="Willy Flores"
+                credit="2.º Premio Nacional de Teatro · Instituciones de Educación Superior"
+                description="Afiche dedicado a Willy Flores, distinguido en la segunda edición del Premio Nacional de Teatro de Instituciones de Educación Superior."
+                reviewLabel="Impresión editorial"
+                review="El afiche destaca el reconocimiento de Willy Flores y su lugar en el teatro universitario."
+                poster
+              />
+              <ArchiveItem
+                image={obra2}
+                alt="Afiche de Ridens Populus del Taller de Teatro UCB"
+                tag="Taller UCB"
+                date="22 y 23 de mayo"
+                title="Ridens Populus"
+                credit="Dirección: David Mondacca"
+                description="Fragmento de El juego que todos jugamos, de Alejandro Jodorowsky, junto con ejercicios dramáticos del taller."
+                reviewLabel="Impresión editorial"
+                review="El humor y los ejercicios dramáticos sugieren una propuesta lúdica, abierta a la experimentación."
+                poster
+              />
+              <ArchiveItem
+                image={obra3}
+                alt="Afiche de la obra Planta Baja con el elenco del Taller de Teatro UCB"
+                tag="Festival PAURO"
+                date="13 de octubre"
+                title="Planta Baja"
+                credit="Dramaturgia y dirección: Mauricio Pacheco Ch."
+                description="Puesta en escena del Taller de Teatro UCB, presentada en el Teatro del Colegio Marista."
+                reviewLabel="Impresión editorial"
+                review="La imagen del elenco reunido anticipa una puesta colectiva donde el trabajo en grupo toma protagonismo."
+                poster
+              />
+              <ArchiveItem
+                image={obra4}
+                alt="Afiche de La Leyenda de Jenecherú con dos intérpretes bajo luz verde"
+                tag="41.º Festival PAURO"
+                date="23 de octubre · 15:00 y 17:00"
+                title="La Leyenda de Jenecherú"
+                credit="Dramaturgia y dirección: Mauricio Pacheco Ch."
+                description="Obra de teatro presentada en el Teatro del Colegio Marista como parte del 41.º Festival PAURO."
+                reviewLabel="Impresión editorial"
+                review="La iluminación verde y la presencia de los intérpretes crean una imagen escénica llena de misterio."
+                poster
               />
             </div>
           </div>
@@ -562,7 +641,7 @@ function App() {
               {workshops.map((workshop) => {
                 const remaining = Math.max(0, workshop.capacity - workshop.enrolledSeats);
                 return (
-                  <details className="accordion-card workshop" key={workshop.id}>
+                  <details className="accordion-card workshop" data-scroll-reveal key={workshop.id}>
                     <summary className="accordion-card__summary">
                       <div className="workshop__header">
                         <span className="workshop__title">{workshop.title}</span>
@@ -601,7 +680,7 @@ function App() {
             aside={"Resolvemos tus dudas sobre\nfunciones y talleres."}
           />
           <div className="accordion-group">
-            <details className="accordion-card faq-card">
+            <details className="accordion-card faq-card" data-scroll-reveal>
               <summary className="accordion-card__summary">
                 <span className="faq-card__question">¿Cómo funciona la reserva de butacas?</span>
                 <span className="accordion-card__icon" aria-hidden="true" />
@@ -610,7 +689,7 @@ function App() {
                 <p>Selecciona una función y hasta cuatro butacas disponibles. Recibirás un código de confirmación; los pagos aún no se procesan en línea.</p>
               </div>
             </details>
-            <details className="accordion-card faq-card">
+            <details className="accordion-card faq-card" data-scroll-reveal>
               <summary className="accordion-card__summary">
                 <span className="faq-card__question">¿Necesito experiencia para inscribirme a los talleres?</span>
                 <span className="accordion-card__icon" aria-hidden="true" />
@@ -619,7 +698,7 @@ function App() {
                 <p>Los requisitos y horarios aparecen en la descripción de cada taller. Algunos cursos son aptos para principiantes.</p>
               </div>
             </details>
-            <details className="accordion-card faq-card">
+            <details className="accordion-card faq-card" data-scroll-reveal>
               <summary className="accordion-card__summary">
                 <span className="faq-card__question">¿Puedo elegir butacas para una función agotada?</span>
                 <span className="accordion-card__icon" aria-hidden="true" />
@@ -638,6 +717,11 @@ function App() {
           <span className="brand__name">TEATRO <strong>UCB</strong></span>
         </a>
         <p>Una universidad, muchas historias.</p>
+        <nav className="site-footer__nav" aria-label="Páginas del teatro">
+          {INFO_PAGES.map((page) => (
+            <a href={page.path} key={page.slug}>{page.label}</a>
+          ))}
+        </nav>
         <span className="site-footer__copyright">© 2026 Teatro UCB · Proyecto académico</span>
       </footer>
 
@@ -685,26 +769,34 @@ function App() {
 function ArchiveItem({
   image,
   alt,
+  tag,
   date,
   title,
   credit,
+  description,
+  reviewLabel = "Reseña del público",
   review,
   author,
+  poster = false,
 }: {
   image: string;
   alt: string;
+  tag: string;
   date: string;
   title: string;
   credit: string;
-  review: string;
-  author: string;
+  description?: string;
+  reviewLabel?: string;
+  review?: string;
+  author?: string;
+  poster?: boolean;
 }) {
   return (
-    <article className="archive-item">
+    <article className={`archive-item${poster ? " archive-item--poster" : ""}`}>
       <figure className="archive-item__figure">
         <img className="archive-item__img" src={image} alt={alt} loading="lazy" />
         <figcaption>
-          <span className="archive-item__tag">Temporada 2025</span>
+          <span className="archive-item__tag">{tag}</span>
           <span>{date}</span>
         </figcaption>
       </figure>
@@ -713,16 +805,20 @@ function ArchiveItem({
           <h3>{title}</h3>
           <p className="archive-item__sub">{credit}</p>
         </header>
-        <section>
-          <h4>Reseña del público</h4>
-          <article className="review">
-            <header className="review__header">
-              <p className="review__author">{author}</p>
-              <span>Temporada 2025</span>
-            </header>
-            <blockquote className="review__text">“{review}”</blockquote>
-          </article>
-        </section>
+        {description && <p className="archive-item__description">{description}</p>}
+        {review && (
+          <details className="archive-item__review">
+            <summary>{reviewLabel} <span aria-hidden="true">+</span></summary>
+            <article className="review">
+              {author && (
+                <header className="review__header">
+                  <p className="review__author">{author}</p>
+                </header>
+              )}
+              <blockquote className="review__text">“{review}”</blockquote>
+            </article>
+          </details>
+        )}
       </div>
     </article>
   );

@@ -893,6 +893,21 @@ html:not([data-theme="light"]) .filter-favorites.is-active {
   border-color: #ff9aaf;
   background: #800020;
   color: #fff;
+  animation: favorite-pop 260ms ease-out;
+}
+
+@keyframes favorite-pop {
+  0% {
+    transform: scale(0.82);
+  }
+
+  70% {
+    transform: scale(1.16);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .show-card__expiry {

@@ -1,13 +1,19 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
+import { InfoPage } from "./InfoPage.tsx";
+import { INFO_PAGES } from "./infoPages.ts";
 import "../css/variables.css";
 import "../css/styles.css";
 import "../css/components.css";
 import "./application.css";
+import "./info-pages.css";
+
+const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
+const currentInfoPage = INFO_PAGES.find((page) => page.path === currentPath)?.slug;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    {currentInfoPage ? <InfoPage page={currentInfoPage} /> : <App />}
   </React.StrictMode>,
 );

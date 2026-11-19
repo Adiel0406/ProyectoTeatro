@@ -1,6 +1,6 @@
 # Teatro UCB
 
-Aplicación full stack para consultar la cartelera, reservar butacas e inscribirse a talleres. El frontend usa React + TypeScript; la API usa Express y valida entradas con Zod; PostgreSQL almacena funciones, disponibilidad y solicitudes mediante Prisma.
+Aplicación full stack para consultar la cartelera, reservar butacas, inscribirse a talleres y explorar páginas sobre el teatro, el elenco, la galería y el contacto. El frontend usa React + TypeScript; la API usa Express y valida entradas con Zod; PostgreSQL almacena funciones, disponibilidad y solicitudes mediante Prisma.
 
 Las funciones vencen automáticamente al completar la duración configurada para la obra; después se ocultan de la cartelera y ya no aceptan reservas. El tema y las obras favoritas se guardan en el navegador.
 
