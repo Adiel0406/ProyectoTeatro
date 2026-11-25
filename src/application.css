@@ -377,6 +377,134 @@
   font-size: 0.78rem;
 }
 
+.admin-period-select select {
+  min-height: 40px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text-light);
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.admin-report-note,
+.profile-identity {
+  margin-top: 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.admin-access-list,
+.profile-access-list {
+  display: grid;
+  gap: 0.45rem;
+  list-style: none;
+}
+
+.admin-access-list li,
+.profile-access-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.admin-access-list strong,
+.profile-access-list time,
+.admin-access-list time {
+  color: var(--color-text-light);
+}
+
+.admin-user-history {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.admin-user-history h4,
+.admin-user-history h5 {
+  color: var(--color-gold);
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.profile-section-title {
+  margin-bottom: 0.8rem;
+  font-family: var(--font-primary);
+  font-size: 1.35rem;
+  font-weight: 400;
+}
+
+.profile-form {
+  margin-top: 0.8rem;
+}
+
+.profile-form textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text-light);
+  font: inherit;
+  font-size: 0.84rem;
+  resize: vertical;
+}
+
+.profile-form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text-light);
+  font: inherit;
+  font-size: 0.84rem;
+}
+
+.profile-history {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.profile-history__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.78rem;
+}
+
+.profile-history__item > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.profile-history__item span,
+.profile-history__item small {
+  color: var(--color-text-muted);
+}
+
+.profile-history__item > strong {
+  color: var(--color-gold);
+  white-space: nowrap;
+}
+
 .admin-show-list,
 .admin-code-list {
   display: grid;

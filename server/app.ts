@@ -7,10 +7,12 @@ import helmet from "helmet";
 import { ZodError } from "zod";
 import {
   accessCodeSchema,
+  adminReportPeriodSchema,
   createPerformanceSchema,
   createShowSchema,
   credentialsSchema,
   idSchema,
+  profileSchema,
   registrationSchema,
   reservationSchema,
   showStatusSchema,
@@ -108,6 +110,30 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     }
   };
 
+  const optionalAuth: RequestHandler = async (request, response, next) => {
+    try {
+      const token = readSessionToken(request.headers.cookie);
+      if (!token || !/^[\da-zA-Z_-]{40,60}$/.test(token)) {
+        next();
+        return;
+      }
+
+      const session = await prisma.authSession.findUnique({
+        where: { tokenHash: hashToken(token) },
+        select: {
+          user: { select: { id: true, ci: true, role: true } },
+          expiresAt: true,
+        },
+      });
+      if (session && session.expiresAt > new Date()) {
+        response.locals.authUser = session.user;
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
   const requireAdmin: RequestHandler = (_request, response, next) => {
     if (response.locals.authUser?.role !== "ADMIN") {
       response.status(403).json({
@@ -191,12 +217,17 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       });
 
       const token = createOpaqueToken();
-      await prisma.authSession.create({
-        data: {
-          tokenHash: hashToken(token),
-          userId: user.id,
-          expiresAt: new Date(Date.now() + SESSION_DURATION_MS),
-        },
+      await prisma.$transaction(async (transaction) => {
+        await transaction.authSession.create({
+          data: {
+            tokenHash: hashToken(token),
+            userId: user.id,
+            expiresAt: new Date(Date.now() + SESSION_DURATION_MS),
+          },
+        });
+        await transaction.userAccessEvent.create({
+          data: { userId: user.id, type: "REGISTER" },
+        });
       });
       response.setHeader("Set-Cookie", `teatro_session=${token}; ${sessionCookieOptions}`);
       response.status(201).json({ user });
@@ -231,12 +262,17 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     }
 
     const token = createOpaqueToken();
-    await prisma.authSession.create({
-      data: {
-        tokenHash: hashToken(token),
-        userId: user.id,
-        expiresAt: new Date(Date.now() + SESSION_DURATION_MS),
-      },
+    await prisma.$transaction(async (transaction) => {
+      await transaction.authSession.create({
+        data: {
+          tokenHash: hashToken(token),
+          userId: user.id,
+          expiresAt: new Date(Date.now() + SESSION_DURATION_MS),
+        },
+      });
+      await transaction.userAccessEvent.create({
+        data: { userId: user.id, type: "LOGIN" },
+      });
     });
     response.setHeader("Set-Cookie", `teatro_session=${token}; ${sessionCookieOptions}`);
     response.json({ user: { id: user.id, ci: user.ci, role: user.role } });
@@ -244,6 +280,67 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
 
   api.get("/auth/me", requireAuth, (_request, response) => {
     response.json({ user: response.locals.authUser });
+  });
+
+  api.get("/account/profile", requireAuth, async (_request, response) => {
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { id: response.locals.authUser.id },
+      select: {
+        id: true,
+        ci: true,
+        role: true,
+        displayName: true,
+        bio: true,
+        favoriteQuote: true,
+        createdAt: true,
+      },
+    });
+    response.json({ user });
+  });
+
+  api.patch("/account/profile", requireAuth, async (request, response) => {
+    const input = profileSchema.parse(request.body);
+    const user = await prisma.user.update({
+      where: { id: response.locals.authUser.id },
+      data: input,
+      select: {
+        id: true,
+        ci: true,
+        role: true,
+        displayName: true,
+        bio: true,
+        favoriteQuote: true,
+        createdAt: true,
+      },
+    });
+    response.json({ user });
+  });
+
+  api.get("/account/history", requireAuth, async (_request, response) => {
+    const userId = response.locals.authUser.id;
+    const [reservations, accessEvents] = await Promise.all([
+      prisma.reservation.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        include: {
+          performance: { include: { show: { select: { title: true } } } },
+          seats: { include: { seat: { select: { code: true } } } },
+        },
+      }),
+      prisma.userAccessEvent.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, type: true, createdAt: true },
+      }),
+    ]);
+    response.json({
+      reservations: reservations.map(({ seats, performance, ...reservation }) => ({
+        ...reservation,
+        performance: { ...performance, show: performance.show },
+        seatCodes: seats.map(({ seat }) => seat.code).sort(),
+      })),
+      accessEvents,
+    });
   });
 
   api.post("/auth/logout", async (request, response) => {
@@ -276,6 +373,138 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
         seatCodes: seats.map(({ seat }) => seat.code).sort(),
       })),
     );
+  });
+
+  api.get("/admin/reports", requireAuth, requireAdmin, async (request, response) => {
+    const period = adminReportPeriodSchema.parse(request.query.period ?? "month");
+    const now = new Date();
+    const startsAt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    if (period === "week") {
+      startsAt.setUTCDate(startsAt.getUTCDate() - ((startsAt.getUTCDay() + 6) % 7));
+    } else if (period === "month") {
+      startsAt.setUTCDate(1);
+    } else {
+      startsAt.setUTCMonth(0, 1);
+    }
+
+    const [reservations, loginCount] = await Promise.all([
+      prisma.reservation.findMany({
+        where: { createdAt: { gte: startsAt, lte: now } },
+        select: {
+          totalAmount: true,
+          performance: { select: { show: { select: { id: true, title: true } } } },
+        },
+      }),
+      prisma.userAccessEvent.count({
+        where: { type: "LOGIN", createdAt: { gte: startsAt, lte: now } },
+      }),
+    ]);
+    const revenueByShow = new Map<string, { id: string; title: string; reservationCount: number; amount: number }>();
+    for (const reservation of reservations) {
+      const { id, title } = reservation.performance.show;
+      const current = revenueByShow.get(id) ?? { id, title, reservationCount: 0, amount: 0 };
+      current.reservationCount += 1;
+      current.amount += reservation.totalAmount;
+      revenueByShow.set(id, current);
+    }
+    response.json({
+      period,
+      startsAt,
+      endsAt: now,
+      reservationCount: reservations.length,
+      reservedAmount: reservations.reduce((total, item) => total + item.totalAmount, 0),
+      loginCount,
+      byShow: [...revenueByShow.values()]
+        .sort((left, right) => right.amount - left.amount),
+    });
+  });
+
+  api.get("/admin/users", requireAuth, requireAdmin, async (_request, response) => {
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        ci: true,
+        role: true,
+        displayName: true,
+        bio: true,
+        favoriteQuote: true,
+        createdAt: true,
+        _count: { select: { reservations: true, accessEvents: true } },
+        accessEvents: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true },
+        },
+      },
+    });
+    response.json(users.map(({ _count, accessEvents, ...user }) => ({
+      ...user,
+      reservationCount: _count.reservations,
+      accessCount: _count.accessEvents,
+      lastAccessAt: accessEvents[0]?.createdAt ?? null,
+    })));
+  });
+
+  api.get("/admin/users/:id/history", requireAuth, requireAdmin, async (request, response) => {
+    const userId = idSchema.parse(request.params.id);
+    const [user, reservations, accessEvents] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          ci: true,
+          role: true,
+          displayName: true,
+          bio: true,
+          favoriteQuote: true,
+          createdAt: true,
+        },
+      }),
+      prisma.reservation.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        include: {
+          performance: { include: { show: { select: { title: true } } } },
+          seats: { include: { seat: { select: { code: true } } } },
+        },
+      }),
+      prisma.userAccessEvent.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        select: { id: true, type: true, createdAt: true },
+      }),
+    ]);
+    if (!user) {
+      response.status(404).json({
+        error: { code: "USER_NOT_FOUND", message: "No se encontró la cuenta solicitada." },
+      });
+      return;
+    }
+    response.json({
+      user,
+      reservations: reservations.map(({ seats, performance, ...reservation }) => ({
+        ...reservation,
+        performance: { ...performance, show: performance.show },
+        seatCodes: seats.map(({ seat }) => seat.code).sort(),
+      })),
+      accessEvents,
+    });
+  });
+
+  api.get("/admin/access-events", requireAuth, requireAdmin, async (_request, response) => {
+    const events = await prisma.userAccessEvent.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        type: true,
+        createdAt: true,
+        user: { select: { id: true, ci: true, displayName: true } },
+      },
+    });
+    response.json(events);
   });
 
   api.get("/admin/shows", requireAuth, requireAdmin, async (_request, response) => {
@@ -545,6 +774,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
 
   api.post(
     "/reservations",
+    optionalAuth,
     rateLimit({
       windowMs: 15 * 60 * 1000,
       limit: 8,
@@ -597,6 +827,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
             data: {
               confirmationCode: randomBytes(8).toString("hex").toUpperCase(),
               performanceId: performance.id,
+              userId: response.locals.authUser?.id,
               customerName: input.name,
               customerEmail: input.email,
               totalAmount: seats.reduce((total, seat) => total + seat.price, 0),

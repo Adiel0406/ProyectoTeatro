@@ -32,6 +32,48 @@ interface AdminAccessCode {
   usedBy: { ci: string } | null;
 }
 
+interface AdminUser {
+  id: string;
+  ci: string;
+  role: "USER" | "ADMIN";
+  displayName: string | null;
+  bio: string | null;
+  favoriteQuote: string | null;
+  createdAt: string;
+  reservationCount: number;
+  accessCount: number;
+  lastAccessAt: string | null;
+}
+
+interface AdminUserHistory {
+  user: Pick<AdminUser, "id" | "ci" | "role" | "displayName" | "bio" | "favoriteQuote" | "createdAt">;
+  reservations: AdminReservation[];
+  accessEvents: Array<{ id: string; type: "LOGIN" | "REGISTER"; createdAt: string }>;
+}
+
+interface AdminReport {
+  period: "week" | "month" | "year";
+  startsAt: string;
+  endsAt: string;
+  reservationCount: number;
+  reservedAmount: number;
+  loginCount: number;
+  byShow: Array<{ id: string; title: string; reservationCount: number; amount: number }>;
+}
+
+interface AdminAccessEvent {
+  id: string;
+  type: "LOGIN" | "REGISTER";
+  createdAt: string;
+  user: { id: string; ci: string; displayName: string | null };
+}
+
+const periodLabels = {
+  week: "esta semana",
+  month: "este mes",
+  year: "este año",
+};
+
 const genres: Array<{ value: Genre; label: string; apiValue: "DRAMA" | "COMEDIA" | "MUSICAL" }> = [
   { value: "drama", label: "Drama", apiValue: "DRAMA" },
   { value: "comedia", label: "Comedia", apiValue: "COMEDIA" },
@@ -62,6 +104,13 @@ export function AdminDashboard({
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [adminShows, setAdminShows] = useState<AdminShow[]>([]);
   const [accessCodes, setAccessCodes] = useState<AdminAccessCode[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [accessEvents, setAccessEvents] = useState<AdminAccessEvent[]>([]);
+  const [report, setReport] = useState<AdminReport | null>(null);
+  const [reportPeriod, setReportPeriod] = useState<AdminReport["period"]>("month");
+  const [reportLoading, setReportLoading] = useState(true);
+  const [selectedUserHistory, setSelectedUserHistory] = useState<AdminUserHistory | null>(null);
+  const [loadingUserHistory, setLoadingUserHistory] = useState(false);
   const [loadingReservations, setLoadingReservations] = useState(true);
   const [loadingShows, setLoadingShows] = useState(true);
   const [reservationSearch, setReservationSearch] = useState("");
@@ -102,12 +151,56 @@ export function AdminDashboard({
     }
   };
 
+  const loadUsers = async () => {
+    try {
+      setUsers(await apiRequest<AdminUser[]>("/admin/users"));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "No se pudieron cargar las cuentas.");
+    }
+  };
+
+  const loadAccessEvents = async () => {
+    try {
+      setAccessEvents(await apiRequest<AdminAccessEvent[]>("/admin/access-events"));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "No se pudo cargar la actividad de acceso.");
+    }
+  };
+
+  const loadReport = async (period: AdminReport["period"] = reportPeriod) => {
+    setReportLoading(true);
+    try {
+      const result = await apiRequest<AdminReport>(`/admin/reports?period=${period}`);
+      setReport(result);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "No se pudo cargar el reporte.");
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const loadUserHistory = async (userId: string) => {
+    setLoadingUserHistory(true);
+    try {
+      setSelectedUserHistory(await apiRequest<AdminUserHistory>(
+        `/admin/users/${encodeURIComponent(userId)}/history`,
+      ));
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "No se pudo cargar el historial de la cuenta.", "error");
+    } finally {
+      setLoadingUserHistory(false);
+    }
+  };
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (dialog && !dialog.open) dialog.showModal();
     void loadReservations();
     void loadAdminShows();
     void loadAccessCodes();
+    void loadUsers();
+    void loadAccessEvents();
+    void loadReport();
     return () => {
       if (dialog?.open) dialog.close();
     };
@@ -144,6 +237,7 @@ export function AdminDashboard({
   const activeAccessCodes = accessCodes.filter((item) =>
     !item.usedAt && !item.revokedAt && new Date(item.expiresAt).getTime() > Date.now(),
   ).length;
+  const registeredUsers = users.length;
 
   const downloadReservations = () => {
     const escapeCell = (value: string | number) => {
@@ -302,7 +396,7 @@ export function AdminDashboard({
         <button className="dialog__close" type="button" aria-label="Cerrar panel" onClick={onClose}>×</button>
         <p className="eyebrow"><span className="eyebrow__rule" />Gestión del teatro</p>
         <h2 id="admin-title">Panel de <em>administración.</em></h2>
-        <p className="admin-panel__intro">Gestiona las funciones, revisa las reservas y otorga accesos administrativos.</p>
+        <p className="admin-panel__intro">Consulta la actividad de las cuentas, las reservas y el rendimiento de la cartelera.</p>
 
         <section className="admin-metrics" aria-label="Resumen de actividad">
           <article className="admin-metric">
@@ -330,6 +424,189 @@ export function AdminDashboard({
             <strong>{activeAccessCodes}</strong>
             <small>Disponibles para un registro</small>
           </article>
+          <article className="admin-metric">
+            <span>Cuentas registradas</span>
+            <strong>{registeredUsers}</strong>
+            <small>Usuarios y administradores</small>
+          </article>
+        </section>
+
+        <section className="admin-section" aria-labelledby="admin-report-title">
+          <div className="admin-section__heading">
+            <div>
+              <p className="eyebrow"><span className="eyebrow__rule" />Resumen</p>
+              <h3 id="admin-report-title">Actividad e ingresos por reservas</h3>
+            </div>
+            <label className="admin-period-select">
+              <span className="visually-hidden">Período del reporte</span>
+              <select
+                value={reportPeriod}
+                onChange={(event) => {
+                  const period = event.target.value as AdminReport["period"];
+                  setReportPeriod(period);
+                  void loadReport(period);
+                }}
+              >
+                <option value="week">Esta semana</option>
+                <option value="month">Este mes</option>
+                <option value="year">Este año</option>
+              </select>
+            </label>
+          </div>
+          {reportLoading ? (
+            <p className="admin-empty">Cargando reporte...</p>
+          ) : report ? (
+            <>
+              <div className="admin-metrics">
+                <article className="admin-metric">
+                  <span>Reservas {periodLabels[report.period]}</span>
+                  <strong>{report.reservationCount}</strong>
+                </article>
+                <article className="admin-metric">
+                  <span>Importe asociado</span>
+                  <strong>Bs {report.reservedAmount}</strong>
+                </article>
+                <article className="admin-metric">
+                  <span>Inicios de sesión</span>
+                  <strong>{report.loginCount}</strong>
+                </article>
+              </div>
+              <p className="admin-report-note">
+                Montos calculados desde las reservas creadas en el período; no representan pagos cobrados, ya que el sitio no procesa pagos en línea.
+              </p>
+              {report.byShow.length === 0 ? (
+                <p className="admin-empty">No hay reservas en este período.</p>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table className="admin-table admin-table--compact">
+                    <thead><tr><th>Obra</th><th>Reservas</th><th>Importe asociado</th></tr></thead>
+                    <tbody>
+                      {report.byShow.map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.title}</td>
+                          <td>{item.reservationCount}</td>
+                          <td>Bs {item.amount}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="admin-empty">No se pudo cargar el reporte.</p>
+          )}
+        </section>
+
+        <section className="admin-section" aria-labelledby="admin-users-title">
+          <div className="admin-section__heading">
+            <div>
+              <p className="eyebrow"><span className="eyebrow__rule" />Cuentas</p>
+              <h3 id="admin-users-title">Usuarios e historial</h3>
+            </div>
+            <button className="button button--outline" type="button" onClick={() => { void loadUsers(); void loadAccessEvents(); }}>
+              Actualizar
+            </button>
+          </div>
+          {users.length === 0 ? (
+            <p className="admin-empty">No hay cuentas registradas.</p>
+          ) : (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr><th>Cuenta</th><th>Alta</th><th>Último acceso</th><th>Actividad</th><th>Historial</th></tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user.id}>
+                      <td>
+                        <strong>{user.displayName || `CI ${user.ci}`}</strong>
+                        <span>CI {user.ci} · {user.role === "ADMIN" ? "Administrador" : "Usuario"}</span>
+                        {user.bio && <span>{user.bio}</span>}
+                      </td>
+                      <td>{formatPerformanceDate(user.createdAt)}</td>
+                      <td>{user.lastAccessAt ? formatPerformanceDate(user.lastAccessAt) : "Sin actividad"}</td>
+                      <td>{user.accessCount} accesos · {user.reservationCount} reservas</td>
+                      <td>
+                        <button
+                          className="button button--outline"
+                          type="button"
+                          disabled={loadingUserHistory}
+                          onClick={() => void loadUserHistory(user.id)}
+                        >
+                          Ver historial
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {selectedUserHistory && (
+            <section className="admin-user-history" aria-label={`Historial de CI ${selectedUserHistory.user.ci}`}>
+              <div className="admin-section__heading">
+                <h4>Historial de {selectedUserHistory.user.displayName || `CI ${selectedUserHistory.user.ci}`}</h4>
+                <button className="button button--outline" type="button" onClick={() => setSelectedUserHistory(null)}>
+                  Cerrar historial
+                </button>
+              </div>
+              <h5>Reservas ({selectedUserHistory.reservations.length})</h5>
+              {selectedUserHistory.reservations.length === 0 ? (
+                <p className="admin-empty">No hay reservas asociadas a esta cuenta.</p>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table className="admin-table admin-table--compact">
+                    <thead><tr><th>Obra / función</th><th>Cliente</th><th>Butacas</th><th>Importe</th></tr></thead>
+                    <tbody>
+                      {selectedUserHistory.reservations.map((item) => (
+                        <tr key={item.id}>
+                          <td><strong>{item.performance.show.title}</strong><span>{formatPerformanceDate(item.performance.startsAt)}</span></td>
+                          <td>{item.customerName}<span>{item.customerEmail}</span></td>
+                          <td>{item.seatCodes.join(", ")}</td>
+                          <td>Bs {item.totalAmount}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <h5>Inicios de sesión y registros</h5>
+              <ul className="admin-access-list">
+                {selectedUserHistory.accessEvents.map((event) => (
+                  <li key={event.id}>
+                    {event.type === "LOGIN" ? "Inicio de sesión" : "Cuenta creada"}
+                    <time dateTime={event.createdAt}>{formatPerformanceDate(event.createdAt)}</time>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </section>
+
+        <section className="admin-section" aria-labelledby="admin-access-events-title">
+          <div className="admin-section__heading">
+            <div>
+              <p className="eyebrow"><span className="eyebrow__rule" />Accesos</p>
+              <h3 id="admin-access-events-title">Actividad reciente de cuentas</h3>
+            </div>
+          </div>
+          {accessEvents.length === 0 ? (
+            <p className="admin-empty">Todavía no hay accesos registrados.</p>
+          ) : (
+            <ul className="admin-access-list">
+              {accessEvents.map((event) => (
+                <li key={event.id}>
+                  <span>
+                    <strong>{event.user.displayName || `CI ${event.user.ci}`}</strong>
+                    · {event.type === "LOGIN" ? "inició sesión" : "creó una cuenta"}
+                  </span>
+                  <time dateTime={event.createdAt}>{formatPerformanceDate(event.createdAt)}</time>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="admin-report-note">Se muestran accesos de cuentas registradas; las visitas anónimas al sitio no se identifican ni se rastrean.</p>
         </section>
 
         <section className="admin-section" aria-labelledby="admin-reservations-title">

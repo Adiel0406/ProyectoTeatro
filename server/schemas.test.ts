@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   accessCodeSchema,
+  adminReportPeriodSchema,
   createShowSchema,
   credentialsSchema,
+  profileSchema,
   registrationSchema,
   reservationSchema,
 } from "./schemas.ts";
@@ -53,6 +55,21 @@ describe("account and administrator schemas", () => {
     expect(accessCodeSchema.safeParse({ expiresInDays: 14 }).success).toBe(true);
     expect(accessCodeSchema.safeParse({ expiresInDays: 0 }).success).toBe(false);
     expect(accessCodeSchema.safeParse({ expiresInDays: 91 }).success).toBe(false);
+  });
+
+  it("accepts bounded profile fields and supported report periods", () => {
+    expect(profileSchema.safeParse({
+      displayName: "Ana",
+      bio: "Me gusta el teatro.",
+      favoriteQuote: "Que empiece la función",
+    }).success).toBe(true);
+    expect(profileSchema.safeParse({
+      displayName: "A".repeat(81),
+      bio: null,
+      favoriteQuote: null,
+    }).success).toBe(false);
+    expect(adminReportPeriodSchema.safeParse("month").success).toBe(true);
+    expect(adminReportPeriodSchema.safeParse("daily").success).toBe(false);
   });
 
   it("rejects show schedules that do not have a future performance", () => {

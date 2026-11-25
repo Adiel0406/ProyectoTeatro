@@ -12,6 +12,7 @@ import { AdminDashboard } from "./AdminDashboard.tsx";
 import { AuthDialog } from "./AuthDialog.tsx";
 import { INFO_PAGES } from "./infoPages.ts";
 import { WorkshopDialog } from "./WorkshopDialog.tsx";
+import { UserProfileDialog } from "./UserProfileDialog.tsx";
 import { Toast, useToast } from "./Toast.tsx";
 import bodasDeSangre from "../assets/image/bodasdesangre.jpg";
 import cepilloDeDientes from "../assets/image/cepillodedientes.jpeg";
@@ -112,6 +113,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
+  const [profilePanelOpen, setProfilePanelOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
   const headerRef = useRef<HTMLElement>(null);
   const { toast, showToast, dismissToast } = useToast();
@@ -312,6 +314,18 @@ function App() {
               }}
             >
               Panel admin
+            </button>
+          )}
+          {currentUser && (
+            <button
+              className="site-nav__action"
+              type="button"
+              onClick={() => {
+                setProfilePanelOpen(true);
+                setMenuOpen(false);
+              }}
+            >
+              Mi perfil
             </button>
           )}
           {currentUser && <span className="site-nav__user">CI {currentUser.ci}</span>}
@@ -759,6 +773,12 @@ function App() {
         <AdminDashboard
           onClose={() => setAdminPanelOpen(false)}
           onCatalogChanged={() => void loadCatalog()}
+          notify={showToast}
+        />
+      )}
+      {profilePanelOpen && currentUser && (
+        <UserProfileDialog
+          onClose={() => setProfilePanelOpen(false)}
           notify={showToast}
         />
       )}

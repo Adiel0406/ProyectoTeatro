@@ -46,7 +46,9 @@ Para probar la versión compilada, ejecuta `npm run build` y después `npm start
 
 Las cuentas se registran con CI y contraseña; el servidor guarda las contraseñas con scrypt y utiliza sesiones opacas en cookies `HttpOnly`. Los códigos de administrador son aleatorios, de un solo uso, expiran y se almacenan como hashes.
 
-Para aprovisionar el primer administrador, configura `ADMIN_CI` y `ADMIN_PASSWORD` en el entorno de la terminal y ejecuta `npm run db:seed-admin`. No incluyas credenciales reales en `.env.example`, el repositorio ni los registros de comandos compartidos. Las cuentas nuevas son usuarios normales; un administrador autenticado genera códigos de acceso desde el panel para otorgar permisos de administrador. El panel permite revisar reservas y agregar obras y funciones.
+Para aprovisionar el primer administrador, configura `ADMIN_CI` y `ADMIN_PASSWORD` en el entorno de la terminal y ejecuta `npm run db:seed-admin`. No incluyas credenciales reales en `.env.example`, el repositorio ni los registros de comandos compartidos. Las cuentas nuevas son usuarios normales; un administrador autenticado genera códigos de acceso desde el panel para otorgar permisos de administrador. El panel permite revisar reservas, consultar cuentas e historial de accesos y funciones, y ver importes asociados a reservas por semana, mes o año. El sistema no procesa pagos y no identifica ni rastrea visitas anónimas. Las reservas se asocian a una cuenta solo cuando se realizan con una sesión iniciada.
+
+Las personas con cuenta pueden editar su nombre visible, biografía y frase favorita desde **Mi perfil**, además de consultar las reservas vinculadas a su sesión y el historial de accesos.
 
 ## Comandos
 
@@ -71,6 +73,8 @@ Para aprovisionar el primer administrador, configura `ADMIN_CI` y `ADMIN_PASSWOR
 - `GET /api/performances/:id/seats`: mapa y disponibilidad de butacas.
 - `POST /api/reservations`: crea una reserva atómica (1–4 butacas).
 - `POST /api/workshop-applications`: registra una solicitud de inscripción.
+- `GET/PATCH /api/account/profile` y `GET /api/account/history`: consulta o edita el perfil propio y revisa accesos y reservas vinculadas a la cuenta.
+- Las rutas `/api/admin/*` requieren una sesión de administrador e incluyen usuarios, actividad de acceso, historial por cuenta y reportes semanales, mensuales y anuales.
 
 La API devuelve errores con `{ "error": { "code": "...", "message": "..." } }`. La reserva bloquea butacas en una transacción y calcula el importe con precios de base de datos; los pagos en línea aún no están habilitados.
 

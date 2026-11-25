@@ -36,6 +36,31 @@ export interface AuthUser {
   role: "USER" | "ADMIN";
 }
 
+export interface UserProfile extends AuthUser {
+  displayName: string | null;
+  bio: string | null;
+  favoriteQuote: string | null;
+  createdAt: string;
+}
+
+export interface AccountReservation {
+  id: string;
+  confirmationCode: string;
+  totalAmount: number;
+  createdAt: string;
+  seatCodes: string[];
+  performance: {
+    startsAt: string;
+    show: { title: string };
+  };
+}
+
+export interface UserAccessEvent {
+  id: string;
+  type: "LOGIN" | "REGISTER";
+  createdAt: string;
+}
+
 export interface PerformanceSeat {
   id: string;
   code: string;

@@ -43,6 +43,14 @@ export const showStatusSchema = z.object({
   active: z.boolean(),
 });
 
+export const profileSchema = z.object({
+  displayName: z.string().trim().max(80).nullable(),
+  bio: z.string().trim().max(500).nullable(),
+  favoriteQuote: z.string().trim().max(160).nullable(),
+});
+
+export const adminReportPeriodSchema = z.enum(["week", "month", "year"]);
+
 const futureDateSchema = z.iso.datetime().refine(
   (value) => new Date(value).getTime() > Date.now(),
   "La función debe tener una fecha futura.",
