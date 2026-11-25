@@ -14,6 +14,7 @@ import { INFO_PAGES } from "./infoPages.ts";
 import { WorkshopDialog } from "./WorkshopDialog.tsx";
 import { UserProfileDialog } from "./UserProfileDialog.tsx";
 import { Toast, useToast } from "./Toast.tsx";
+import { StagePreview3D } from "./StagePreview3D.tsx";
 import bodasDeSangre from "../assets/image/bodasdesangre.jpg";
 import cepilloDeDientes from "../assets/image/cepillodedientes.jpeg";
 import obra1 from "../assets/image/obra1.jpg";
@@ -462,13 +463,33 @@ function App() {
                   key={show.id}
                 >
                   <div
-                    className={`show-card__poster poster poster--${show.posterStyle}`}
+                    className={`show-card__poster poster poster--${show.posterStyle}${show.posterUrl ? " show-card__poster--image" : ""}`}
                   >
-                    <span className="poster__topline">TEATRO UCB PRESENTA</span>
-                    <span className="poster__symbol" aria-hidden="true">✳</span>
-                    <span className="poster__title">{show.title}</span>
-                    <span className="poster__credit">{show.playwright}</span>
-                    <span className="poster__number">{String(index + 1).padStart(2, "0")}</span>
+                    {show.posterUrl ? (
+                      <>
+                        <img
+                          className="show-card__poster-backdrop"
+                          src={show.posterUrl}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                        />
+                        <img
+                          className="show-card__poster-img"
+                          src={show.posterUrl}
+                          alt={`Portada de la obra ${show.title}`}
+                          loading="lazy"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <span className="poster__topline">TEATRO UCB PRESENTA</span>
+                        <span className="poster__symbol" aria-hidden="true">✳</span>
+                        <span className="poster__title">{show.title}</span>
+                        <span className="poster__credit">{show.playwright}</span>
+                        <span className="poster__number">{String(index + 1).padStart(2, "0")}</span>
+                      </>
+                    )}
                     <button
                       className={`favorite-toggle${favorites.includes(show.id) ? " is-active" : ""}`}
                       type="button"
@@ -865,6 +886,8 @@ function BookingDialog({
   const [performanceId, setPerformanceId] = useState(show.performances[0]?.id ?? "");
   const [performance, setPerformance] = useState<PerformanceDetail | null>(null);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [lastSelectedSeat, setLastSelectedSeat] = useState("");
+  const [preview3DOpen, setPreview3DOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -885,6 +908,8 @@ function BookingDialog({
     setLoadingSeats(true);
     setPerformance(null);
     setSelectedSeats([]);
+    setLastSelectedSeat("");
+    setPreview3DOpen(false);
     setFeedback("");
     void apiRequest<PerformanceDetail>(`/performances/${performanceId}/seats`, {
       signal: controller.signal,
@@ -911,7 +936,11 @@ function BookingDialog({
   const toggleSeat = (code: string) => {
     setFeedback("");
     if (selectedSeats.includes(code)) {
-      setSelectedSeats((current) => current.filter((seat) => seat !== code));
+      const nextSeats = selectedSeats.filter((seat) => seat !== code);
+      setSelectedSeats(nextSeats);
+      if (lastSelectedSeat === code) {
+        setLastSelectedSeat(nextSeats[nextSeats.length - 1] ?? "");
+      }
       return;
     }
     if (selectedSeats.length === 4) {
@@ -919,6 +948,7 @@ function BookingDialog({
       return;
     }
     setSelectedSeats((current) => [...current, code]);
+    setLastSelectedSeat(code);
   };
 
   const submitReservation = async (event: FormEvent<HTMLFormElement>) => {
@@ -967,113 +997,156 @@ function BookingDialog({
     }
   };
 
+  const previewSeatCode = lastSelectedSeat && selectedSeats.includes(lastSelectedSeat)
+    ? lastSelectedSeat
+    : selectedSeats[0] ?? "";
+
   return (
     <dialog
-      className="dialog"
+      className={`dialog${preview3DOpen ? " dialog--3d" : ""}`}
       ref={dialogRef}
       aria-labelledby="booking-title"
-      onCancel={onClose}
+      onCancel={(event) => {
+        if (preview3DOpen) {
+          event.preventDefault();
+          setPreview3DOpen(false);
+          return;
+        }
+        onClose();
+      }}
     >
       <div className="dialog__panel dialog__panel--booking">
         <button className="dialog__close" type="button" aria-label="Cerrar reserva" onClick={onClose}>×</button>
-        <div className="booking-heading">
-          <p className="eyebrow"><span className="eyebrow__rule" />Tu próxima función</p>
-          <h2 id="booking-title">Elige tus <em>butacas.</em></h2>
-          <p className="booking-show">{show.title}</p>
-        </div>
-        <form onSubmit={(event) => void submitReservation(event)}>
-          <label className="booking-select-label" htmlFor="performance-select">Función</label>
-          <select
-            className="booking-select"
-            id="performance-select"
-            value={performanceId}
-            onChange={(event) => setPerformanceId(event.target.value)}
-          >
-            {show.performances.map((item) => (
-              <option value={item.id} key={item.id}>
-                {formatDate(item.startsAt)} · termina {new Intl.DateTimeFormat("es-BO", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }).format(new Date(item.endsAt))} · {item.venue} · {item.availableSeats} disponibles
-              </option>
-            ))}
-          </select>
-          <div className="seat-layout">
-            <div className="stage-label"><span>ESCENARIO</span></div>
-            {loadingSeats && <p className="form-feedback">Cargando butacas...</p>}
-            {!loadingSeats && performance && (
-              <div
-                className="seat-map"
-                data-distribucion="platea"
-                aria-label={`Mapa de butacas para ${performance.venue}`}
-              >
-                <ol className="seat-zone" aria-label="Platea">
-                  {performance.seats.map((seat) => {
-                    const selected = selectedSeats.includes(seat.code);
-                    return (
-                      <li className="seat-item" key={seat.id}>
-                        <button
-                          className="seat"
-                          type="button"
-                          data-tipo={seat.category === "Preferencial" ? "preferencial" : "silla"}
-                          data-estado={seat.status === "RESERVED" ? "ocupada" : selected ? "seleccionada" : "disponible"}
-                          aria-pressed={selected}
-                          aria-label={`${seat.code}, ${seat.category}, ${formatPrice(seat.price)}, ${seat.status === "RESERVED" ? "ocupada" : selected ? "seleccionada" : "disponible"}`}
-                          disabled={seat.status === "RESERVED"}
-                          onClick={() => toggleSeat(seat.code)}
-                        >
-                          <span className="seat__label">{seat.code}</span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ol>
+        {preview3DOpen && performance && selectedSeats.length > 0 && (
+          <StagePreview3D
+            showTitle={show.title}
+            venue={performance.venue}
+            seats={performance.seats}
+            selectedSeats={selectedSeats}
+            initialSeatCode={previewSeatCode}
+            onClose={() => setPreview3DOpen(false)}
+          />
+        )}
+        <div hidden={preview3DOpen}>
+          <div className="booking-heading">
+            <p className="eyebrow"><span className="eyebrow__rule" />Tu próxima función</p>
+            <h2 id="booking-title">Elige tus <em>butacas.</em></h2>
+            <p className="booking-show">{show.title}</p>
+          </div>
+          <form onSubmit={(event) => void submitReservation(event)}>
+            <label className="booking-select-label" htmlFor="performance-select">Función</label>
+            <select
+              className="booking-select"
+              id="performance-select"
+              value={performanceId}
+              onChange={(event) => setPerformanceId(event.target.value)}
+            >
+              {show.performances.map((item) => (
+                <option value={item.id} key={item.id}>
+                  {formatDate(item.startsAt)} · termina {new Intl.DateTimeFormat("es-BO", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(item.endsAt))} · {item.venue} · {item.availableSeats} disponibles
+                </option>
+              ))}
+            </select>
+            <div className="seat-layout">
+              <div className="stage-label"><span>ESCENARIO</span></div>
+              {loadingSeats && <p className="form-feedback">Cargando butacas...</p>}
+              {!loadingSeats && performance && (
+                <div
+                  className="seat-map"
+                  data-distribucion="platea"
+                  aria-label={`Mapa de butacas para ${performance.venue}`}
+                >
+                  <ol className="seat-zone" aria-label="Platea">
+                    {performance.seats.map((seat) => {
+                      const selected = selectedSeats.includes(seat.code);
+                      return (
+                        <li className="seat-item" key={seat.id}>
+                          <button
+                            className="seat"
+                            type="button"
+                            data-tipo={seat.category === "Preferencial" ? "preferencial" : "silla"}
+                            data-estado={seat.status === "RESERVED" ? "ocupada" : selected ? "seleccionada" : "disponible"}
+                            aria-pressed={selected}
+                            aria-label={`${seat.code}, ${seat.category}, ${formatPrice(seat.price)}, ${seat.status === "RESERVED" ? "ocupada" : selected ? "seleccionada" : "disponible"}`}
+                            disabled={seat.status === "RESERVED"}
+                            onClick={() => toggleSeat(seat.code)}
+                          >
+                            <span className="seat__label">{seat.code}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              )}
+              <ul className="seat-legend" aria-label="Leyenda del mapa">
+                <li><span className="seat-legend__swatch seat-legend__swatch--available" />Disponible</li>
+                <li><span className="seat-legend__swatch seat-legend__swatch--selected" />Seleccionada</li>
+                <li><span className="seat-legend__swatch seat-legend__swatch--occupied" />Ocupada</li>
+              </ul>
+              <div className="seat-preview-bar">
+                <button
+                  className="button button--outline seat-preview-btn"
+                  type="button"
+                  disabled={loadingSeats || !performance || selectedSeats.length === 0}
+                  onClick={() => setPreview3DOpen(true)}
+                >
+                  <svg className="seat-preview-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                    <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" />
+                    <path d="M3 7l9 5 9-5" />
+                    <path d="M12 12v10" />
+                  </svg>
+                  Vista 3D desde tu butaca
+                </button>
+                <span className="seat-preview-bar__hint">
+                  {selectedSeats.length > 0
+                    ? `Previsualiza el escenario en 3D desde ${previewSeatCode} antes de confirmar`
+                    : "Selecciona una butaca para ver el escenario en 3D desde ese lugar"}
+                </span>
               </div>
-            )}
-            <ul className="seat-legend" aria-label="Leyenda del mapa">
-              <li><span className="seat-legend__swatch seat-legend__swatch--available" />Disponible</li>
-              <li><span className="seat-legend__swatch seat-legend__swatch--selected" />Seleccionada</li>
-              <li><span className="seat-legend__swatch seat-legend__swatch--occupied" />Ocupada</li>
-            </ul>
-          </div>
-          <div className="booking-summary">
-            <span>{selectedSeats.length} {selectedSeats.length === 1 ? "butaca" : "butacas"} seleccionadas</span>
-            <strong>{formatPrice(selectedTotal)}</strong>
-          </div>
-          <div className="reservation-fields">
-            <label>
-              Nombre completo
-              <input
-                autoComplete="name"
-                minLength={2}
-                maxLength={100}
-                required
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </label>
-            <label>
-              Correo electrónico
-              <input
-                autoComplete="email"
-                type="email"
-                maxLength={254}
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </label>
-          </div>
-          {feedback && <p className="form-feedback" role="alert">{feedback}</p>}
-          <button
-            className="button button--gold button--continue"
-            type="submit"
-            disabled={submitting || loadingSeats || selectedSeats.length === 0}
-          >
-            {submitting ? "Confirmando..." : "Confirmar reserva"} <span aria-hidden="true">→</span>
-          </button>
-          <p className="dialog__hint">No se procesa ningún pago en línea.</p>
-        </form>
+            </div>
+            <div className="booking-summary">
+              <span>{selectedSeats.length} {selectedSeats.length === 1 ? "butaca" : "butacas"} seleccionadas</span>
+              <strong>{formatPrice(selectedTotal)}</strong>
+            </div>
+            <div className="reservation-fields">
+              <label>
+                Nombre completo
+                <input
+                  autoComplete="name"
+                  minLength={2}
+                  maxLength={100}
+                  required
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </label>
+              <label>
+                Correo electrónico
+                <input
+                  autoComplete="email"
+                  type="email"
+                  maxLength={254}
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </label>
+            </div>
+            {feedback && <p className="form-feedback" role="alert">{feedback}</p>}
+            <button
+              className="button button--gold button--continue"
+              type="submit"
+              disabled={submitting || loadingSeats || selectedSeats.length === 0}
+            >
+              {submitting ? "Confirmando..." : "Confirmar reserva"} <span aria-hidden="true">→</span>
+            </button>
+            <p className="dialog__hint">No se procesa ningún pago en línea.</p>
+          </form>
+        </div>
       </div>
     </dialog>
   );

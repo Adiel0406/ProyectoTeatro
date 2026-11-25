@@ -12,6 +12,7 @@ import {
   createPerformanceSchema,
   createShowSchema,
   credentialsSchema,
+  decodeJpegPosterDataUrl,
   idSchema,
   profileSchema,
   registrationSchema,
@@ -69,7 +70,15 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     }
     next();
   });
-  app.use(express.json({ limit: "32kb" }));
+  const defaultJsonParser = express.json({ limit: "32kb" });
+  const showPosterJsonParser = express.json({ limit: "4500kb" });
+  app.use((request, response, next) => {
+    if (request.method === "POST" && request.path === "/api/admin/shows") {
+      showPosterJsonParser(request, response, next);
+      return;
+    }
+    defaultJsonParser(request, response, next);
+  });
   app.use(
     "/api",
     rateLimit({
@@ -568,10 +577,15 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     response.json({ id: userId, role: input.role });
   });
 
+  function toPosterUrl(showId: string, poster: { updatedAt: Date } | null): string | null {
+    return poster ? `/api/shows/${showId}/poster?v=${poster.updatedAt.getTime()}` : null;
+  }
+
   api.get("/admin/shows", requireAuth, requireAdmin, async (_request, response) => {
     const shows = await prisma.show.findMany({
       orderBy: [{ active: "desc" }, { title: "asc" }],
       include: {
+        poster: { select: { updatedAt: true } },
         performances: {
           orderBy: { startsAt: "asc" },
           include: { seats: { select: { status: true } } },
@@ -579,9 +593,10 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       },
     });
     response.json(
-      shows.map(({ performances, ...show }) => ({
+      shows.map(({ performances, poster, ...show }) => ({
         ...show,
         genre: show.genre.toLowerCase(),
+        posterUrl: toPosterUrl(show.id, poster),
         performances: performances.map(({ seats, ...performance }) => ({
           ...performance,
           availableSeats: seats.filter((seat) => seat.status === "AVAILABLE").length,
@@ -693,6 +708,17 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
 
   api.post("/admin/shows", requireAuth, requireAdmin, async (request, response) => {
     const input = createShowSchema.parse(request.body);
+    const posterBuffer = input.posterImage ? decodeJpegPosterDataUrl(input.posterImage) : null;
+    if (input.posterImage && !posterBuffer) {
+      response.status(400).json({
+        error: {
+          code: "INVALID_POSTER",
+          message: "La portada debe ser una imagen en formato JPG válida de hasta 3 MB.",
+        },
+      });
+      return;
+    }
+
     const slugBase = input.title
       .normalize("NFKD")
       .replace(/\p{Diacritic}/gu, "")
@@ -715,6 +741,9 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
           genre: input.genre,
           duration: input.duration,
           posterStyle,
+          ...(posterBuffer
+            ? { poster: { create: { imageData: Uint8Array.from(posterBuffer) } } }
+            : {}),
         },
         select: { id: true, title: true },
       });
@@ -765,6 +794,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       where: { active: true },
       orderBy: { title: "asc" },
       include: {
+        poster: { select: { updatedAt: true } },
         performances: {
           where: { startsAt: { gte: new Date() }, endsAt: { gt: new Date() } },
           orderBy: { startsAt: "asc" },
@@ -774,15 +804,37 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     });
 
     response.json(
-      shows.map(({ performances, ...show }) => ({
+      shows.map(({ performances, poster, ...show }) => ({
         ...show,
         genre: show.genre.toLowerCase(),
+        posterUrl: toPosterUrl(show.id, poster),
         performances: performances.map(({ seats, ...performance }) => ({
           ...performance,
           availableSeats: seats.filter((seat) => seat.status === "AVAILABLE").length,
         })),
       })),
     );
+  });
+
+  api.get("/shows/:id/poster", async (request, response) => {
+    const showId = idSchema.parse(request.params.id);
+    const poster = await prisma.showPoster.findUnique({
+      where: { showId },
+      select: { imageData: true },
+    });
+    if (!poster) {
+      response.status(404).json({
+        error: { code: "POSTER_NOT_FOUND", message: "La obra no tiene portada personalizada." },
+      });
+      return;
+    }
+
+    const body = Buffer.from(poster.imageData);
+    response.setHeader("Content-Type", "image/jpeg");
+    response.setHeader("Content-Length", String(body.length));
+    response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    response.setHeader("X-Content-Type-Options", "nosniff");
+    response.send(body);
   });
 
   api.get("/workshops", async (_request, response) => {
@@ -1017,6 +1069,21 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
           code: "INVALID_INPUT",
           message: "Revisa los datos enviados.",
           details: error.issues.map(({ path, message }) => ({ path: path.join("."), message })),
+        },
+      });
+      return;
+    }
+
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "type" in error &&
+      error.type === "entity.too.large"
+    ) {
+      response.status(413).json({
+        error: {
+          code: "PAYLOAD_TOO_LARGE",
+          message: "La imagen de portada es demasiado grande. Usa un archivo JPG de hasta 3 MB.",
         },
       });
       return;

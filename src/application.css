@@ -996,7 +996,7 @@ html:not([data-theme="light"]) .filter-favorites.is-active {
 
 .favorite-toggle {
   position: absolute;
-  z-index: 1;
+  z-index: 2;
   top: 0.9rem;
   right: 0.9rem;
   display: grid;
@@ -2105,4 +2105,340 @@ html[data-theme="light"] .workshop-receipt-card,
 html[data-theme="light"] .workshop-terms-checkbox {
   background: #f1ebd026;
   border-color: #e0d8cb;
+}
+
+/* ==========================================================================
+   PORTADA JPG EN CARTELERA Y PANEL DE ADMINISTRACIÓN
+   ========================================================================== */
+
+.show-card__poster.show-card__poster--image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  min-height: 300px;
+  max-height: 460px;
+  padding: 0;
+  overflow: hidden;
+  background: #0d0e13;
+  isolation: isolate;
+}
+
+.show-card__poster.show-card__poster--image::before,
+.show-card__poster.show-card__poster--image::after {
+  content: none;
+}
+
+.show-card__poster-backdrop {
+  position: absolute;
+  inset: -14px;
+  z-index: 0;
+  width: calc(100% + 28px);
+  height: calc(100% + 28px);
+  object-fit: cover;
+  filter: blur(18px) saturate(1.1) brightness(0.42);
+  transform: scale(1.06);
+  pointer-events: none;
+}
+
+.show-card__poster-img {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0.4rem;
+  object-fit: contain;
+  object-position: center;
+}
+
+.admin-poster-field {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-poster-field input[type="file"] {
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+}
+
+.admin-poster-field input[type="file"]::file-selector-button {
+  margin-right: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-gold);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.admin-poster-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.admin-poster-preview__frame {
+  position: relative;
+  width: 132px;
+  aspect-ratio: 4 / 5;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #0d0e13;
+}
+
+.admin-poster-preview__meta {
+  display: grid;
+  flex: 1 1 200px;
+  gap: 0.45rem;
+  justify-items: start;
+}
+
+.admin-poster-preview__meta strong {
+  color: var(--color-text-light);
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-poster-preview__meta span {
+  color: var(--color-text-muted);
+  font-size: 0.74rem;
+}
+
+.admin-poster-preview__meta .button {
+  min-height: 36px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.74rem;
+}
+
+html[data-theme="light"] .admin-poster-preview {
+  background: var(--color-surface-raised);
+}
+
+html[data-theme="light"] .admin-poster-preview__meta strong {
+  color: var(--page-foreground);
+}
+
+/* ==========================================================================
+   PREVISUALIZACIÓN TRIDIMENSIONAL DEL ESCENARIO DESDE BUTACA
+   ========================================================================== */
+
+.dialog--3d {
+  width: min(95vw, 940px);
+}
+
+.seat-preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-top: 1.15rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgb(212 175 55 / 26%);
+  border-radius: var(--radius-md);
+  background: rgb(212 175 55 / 6%);
+}
+
+.seat-preview-btn {
+  min-height: 42px;
+  gap: 0.6rem;
+  padding: 0.55rem 1.05rem;
+  font-size: 0.78rem;
+}
+
+.seat-preview-btn__icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.seat-preview-bar__hint {
+  color: var(--color-text-muted);
+  font-size: 0.74rem;
+}
+
+.stage-3d {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+
+.stage-3d__topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.85rem 1rem;
+  padding-right: 2.5rem;
+}
+
+.stage-3d__title {
+  margin: 0.35rem 0 0.2rem;
+  font-family: var(--font-primary);
+  font-size: clamp(1.55rem, 3.2vw, 2.2rem);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.stage-3d__title em {
+  color: var(--color-gold);
+  font-weight: 400;
+}
+
+.stage-3d__subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.stage-3d__back {
+  min-height: 40px;
+  padding: 0.5rem 0.95rem;
+  font-size: 0.76rem;
+}
+
+.stage-3d__seats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stage-3d__seat-chip {
+  min-height: 36px;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.stage-3d__seat-chip:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.stage-3d__seat-chip.is-active {
+  border-color: var(--color-gold);
+  background: var(--color-gold);
+  color: var(--color-night);
+}
+
+.stage-3d__viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 300px;
+  max-height: 520px;
+  overflow: hidden;
+  border: 1px solid rgb(212 175 55 / 32%);
+  border-radius: var(--radius-md);
+  background: #09080c;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.stage-3d__viewport:active {
+  cursor: grabbing;
+}
+
+.stage-3d__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.stage-3d__hud-top,
+.stage-3d__hud-bottom {
+  position: absolute;
+  right: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.stage-3d__hud-top {
+  top: 0.75rem;
+}
+
+.stage-3d__hud-bottom {
+  bottom: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: var(--radius-sm);
+  background: rgb(10 9 12 / 72%);
+  color: #e7dfd6;
+  font-size: 0.72rem;
+  backdrop-filter: blur(8px);
+}
+
+.stage-3d__badge {
+  padding: 0.32rem 0.7rem;
+  border: 1px solid rgb(212 175 55 / 38%);
+  border-radius: var(--radius-full);
+  background: rgb(10 9 12 / 76%);
+  color: #f4e2a3;
+  font-size: 0.7rem;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+}
+
+.stage-3d__controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.stage-3d__controls .button {
+  min-height: 38px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.74rem;
+}
+
+html[data-theme="light"] .seat-preview-bar {
+  border-color: rgb(138 101 9 / 28%);
+  background: rgb(138 101 9 / 6%);
+}
+
+html[data-theme="light"] .stage-3d__seat-chip.is-active {
+  color: #fff;
+}
+
+@media (max-width: 620px) {
+  .seat-preview-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stage-3d__topbar {
+    padding-right: 0;
+  }
+
+  .stage-3d__viewport {
+    aspect-ratio: 4 / 3;
+    min-height: 250px;
+  }
+
+  .stage-3d__controls .button {
+    flex: 1 1 auto;
+  }
 }

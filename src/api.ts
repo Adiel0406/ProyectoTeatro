@@ -17,6 +17,7 @@ export interface Show {
   genre: Genre;
   duration: number;
   posterStyle: string;
+  posterUrl: string | null;
   performances: PerformanceSummary[];
 }
 

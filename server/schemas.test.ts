@@ -5,6 +5,8 @@ import {
   adminReportPeriodSchema,
   createShowSchema,
   credentialsSchema,
+  decodeJpegPosterDataUrl,
+  MAX_POSTER_BYTES,
   profileSchema,
   registrationSchema,
   reservationSchema,
@@ -90,5 +92,42 @@ describe("account and administrator schemas", () => {
     expect(createShowSchema.safeParse(show).success).toBe(true);
     expect(createShowSchema.safeParse({ ...show, startsAt: "2000-01-01T00:00:00.000Z" }).success).toBe(false);
     expect(createShowSchema.safeParse({ ...show, startsAt: "not-a-date" }).success).toBe(false);
+  });
+
+  it("accepts valid JPG poster data URLs and rejects non-JPG or oversized posters", () => {
+    const validJpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+    const validPosterDataUrl = `data:image/jpeg;base64,${validJpegBytes.toString("base64")}`;
+
+    const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const pngDataUrl = `data:image/png;base64,${pngHeader.toString("base64")}`;
+    const spoofedJpegDataUrl = `data:image/jpeg;base64,${pngHeader.toString("base64")}`;
+
+    const oversizedJpeg = Buffer.alloc(MAX_POSTER_BYTES + 1, 0x00);
+    oversizedJpeg[0] = 0xff;
+    oversizedJpeg[1] = 0xd8;
+    oversizedJpeg[2] = 0xff;
+    const oversizedDataUrl = `data:image/jpeg;base64,${oversizedJpeg.toString("base64")}`;
+
+    const baseShow = {
+      title: "Una obra con portada",
+      synopsis: "Una descripción suficientemente larga para la obra.",
+      playwright: "Dramaturgia de prueba",
+      genre: "DRAMA",
+      duration: 90,
+      venue: "Sala principal",
+      startsAt: "2099-06-01T22:00:00.000Z",
+      standardPrice: 40,
+      preferredPrice: 70,
+    };
+
+    expect(decodeJpegPosterDataUrl(validPosterDataUrl)).toEqual(validJpegBytes);
+    expect(decodeJpegPosterDataUrl(pngDataUrl)).toBeNull();
+    expect(decodeJpegPosterDataUrl(spoofedJpegDataUrl)).toBeNull();
+    expect(decodeJpegPosterDataUrl(oversizedDataUrl)).toBeNull();
+
+    expect(createShowSchema.safeParse({ ...baseShow, posterImage: validPosterDataUrl }).success).toBe(true);
+    expect(createShowSchema.safeParse({ ...baseShow, posterImage: pngDataUrl }).success).toBe(false);
+    expect(createShowSchema.safeParse({ ...baseShow, posterImage: spoofedJpegDataUrl }).success).toBe(false);
+    expect(createShowSchema.safeParse({ ...baseShow, posterImage: oversizedDataUrl }).success).toBe(false);
   });
 });

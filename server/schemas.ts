@@ -67,12 +67,41 @@ const performanceFields = {
   preferredPrice: z.number().int().min(1).max(100_000),
 };
 
+export const MAX_POSTER_BYTES = 3 * 1024 * 1024;
+const JPEG_DATA_URL_PREFIX = "data:image/jpeg;base64,";
+
+export function decodeJpegPosterDataUrl(value: string): Buffer | null {
+  if (!value.startsWith(JPEG_DATA_URL_PREFIX)) {
+    return null;
+  }
+  const base64 = value.slice(JPEG_DATA_URL_PREFIX.length);
+  if (!base64 || base64.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {
+    return null;
+  }
+  const buffer = Buffer.from(base64, "base64");
+  if (buffer.length < 4 || buffer.length > MAX_POSTER_BYTES) {
+    return null;
+  }
+  if (buffer[0] !== 0xff || buffer[1] !== 0xd8 || buffer[2] !== 0xff) {
+    return null;
+  }
+  return buffer;
+}
+
+export const posterImageSchema = z
+  .string()
+  .refine(
+    (value) => decodeJpegPosterDataUrl(value) !== null,
+    "La portada debe ser una imagen en formato JPG válida de hasta 3 MB.",
+  );
+
 export const createShowSchema = z.object({
   title: z.string().trim().min(2).max(120),
   synopsis: z.string().trim().min(10).max(2000),
   playwright: z.string().trim().min(2).max(120),
   genre: z.enum(["DRAMA", "COMEDIA", "MUSICAL"]),
   duration: z.number().int().min(1).max(600),
+  posterImage: posterImageSchema.optional(),
   ...performanceFields,
 });
 

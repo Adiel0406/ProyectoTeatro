@@ -94,11 +94,21 @@ model Show {
   duration     Int
   posterStyle  String
   active       Boolean       @default(true)
+  poster       ShowPoster?
   performances Performance[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   @@index([active, genre])
+}
+
+model ShowPoster {
+  id        String   @id @default(uuid())
+  showId    String   @unique
+  imageData Bytes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  show      Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
 }
 
 model Performance {

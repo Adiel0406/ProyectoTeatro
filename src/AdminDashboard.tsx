@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { apiRequest, type Genre, type Show } from "./api.ts";
 import type { ToastTone } from "./Toast.tsx";
 
@@ -87,6 +87,39 @@ function formatPerformanceDate(value: string) {
   }).format(new Date(value));
 }
 
+const MAX_POSTER_BYTES = 3 * 1024 * 1024;
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
+}
+
+async function readValidatedJpegFile(file: File): Promise<{ dataUrl: string; sizeLabel: string }> {
+  const hasValidExtension = /\.(jpe?g)$/i.test(file.name);
+  const hasValidMime = file.type === "image/jpeg" || file.type === "";
+  if (!hasValidExtension || !hasValidMime) {
+    throw new Error("Solo se permiten imágenes en formato JPG (.jpg o .jpeg).");
+  }
+  if (file.size === 0 || file.size > MAX_POSTER_BYTES) {
+    throw new Error("La portada JPG debe pesar como máximo 3 MB.");
+  }
+
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) {
+    throw new Error("El archivo seleccionado no es una imagen JPG válida.");
+  }
+
+  const dataUrl = `data:image/jpeg;base64,${bytesToBase64(bytes)}`;
+  const sizeKb = Math.max(1, Math.round(bytes.length / 1024));
+  const sizeLabel = sizeKb >= 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${sizeKb} KB`;
+  return { dataUrl, sizeLabel };
+}
+
 function getFormValue(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
 }
@@ -123,6 +156,13 @@ export function AdminDashboard({
   const [accessCode, setAccessCode] = useState("");
   const [accessCodeExpiry, setAccessCodeExpiry] = useState("");
   const [revokingCodeId, setRevokingCodeId] = useState("");
+  const posterInputRef = useRef<HTMLInputElement>(null);
+  const [posterPreview, setPosterPreview] = useState<{
+    dataUrl: string;
+    fileName: string;
+    sizeLabel: string;
+  } | null>(null);
+  const [posterError, setPosterError] = useState("");
 
   const loadReservations = async () => {
     setLoadingReservations(true);
@@ -351,6 +391,31 @@ export function AdminDashboard({
     }
   };
 
+  const clearPosterSelection = () => {
+    setPosterPreview(null);
+    setPosterError("");
+    if (posterInputRef.current) posterInputRef.current.value = "";
+  };
+
+  const handlePosterChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      clearPosterSelection();
+      return;
+    }
+    setPosterError("");
+    try {
+      const { dataUrl, sizeLabel } = await readValidatedJpegFile(file);
+      setPosterPreview({ dataUrl, fileName: file.name, sizeLabel });
+    } catch (error) {
+      setPosterPreview(null);
+      if (posterInputRef.current) posterInputRef.current.value = "";
+      const message = error instanceof Error ? error.message : "No se pudo cargar la portada JPG.";
+      setPosterError(message);
+      notify(message, "error");
+    }
+  };
+
   const createShow = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -367,6 +432,7 @@ export function AdminDashboard({
           playwright: getFormValue(formData, "playwright"),
           genre: genre.apiValue,
           duration: Number(formData.get("duration")),
+          ...(posterPreview ? { posterImage: posterPreview.dataUrl } : {}),
           startsAt: new Date(getFormValue(formData, "startsAt")).toISOString(),
           venue: getFormValue(formData, "venue"),
           standardPrice: Number(formData.get("standardPrice")),
@@ -375,6 +441,7 @@ export function AdminDashboard({
       });
       notify(`Se creó “${result.show.title}” y su primera función.`);
       form.reset();
+      clearPosterSelection();
       onCatalogChanged();
       await loadAdminShows();
     } catch (error) {
@@ -837,7 +904,7 @@ export function AdminDashboard({
                 <article className="admin-show-row" key={show.id}>
                   <div>
                     <strong>{show.title}</strong>
-                    <span>{show.performances.filter((item) => new Date(item.endsAt).getTime() > Date.now()).length} funciones vigentes · {show.active ? "Publicada" : "Archivada"}</span>
+                    <span>{show.performances.filter((item) => new Date(item.endsAt).getTime() > Date.now()).length} funciones vigentes · {show.active ? "Publicada" : "Archivada"} · {show.posterUrl ? "Portada JPG" : "Afiche predeterminado"}</span>
                     {show.performances.length > 0 && (
                       <details className="admin-performance-details">
                         <summary>Ver funciones y vencimientos</summary>
@@ -891,6 +958,52 @@ export function AdminDashboard({
               Sinopsis
               <textarea name="synopsis" minLength={10} maxLength={2000} rows={3} required />
             </label>
+            <div className="admin-form__wide admin-poster-field">
+              <label>
+                Portada de la obra (JPG, opcional)
+                <input
+                  ref={posterInputRef}
+                  name="posterFile"
+                  type="file"
+                  accept=".jpg,.jpeg,image/jpeg"
+                  onChange={(event) => void handlePosterChange(event)}
+                />
+                <span className="admin-form__hint">
+                  Solo formato JPG (.jpg / .jpeg) de hasta 3 MB. Se adapta completa a la cartelera sin recortarse.
+                </span>
+              </label>
+              {posterError && (
+                <p className="form-feedback" role="alert">{posterError}</p>
+              )}
+              {posterPreview && (
+                <div className="admin-poster-preview">
+                  <div className="admin-poster-preview__frame">
+                    <img
+                      className="show-card__poster-backdrop"
+                      src={posterPreview.dataUrl}
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <img
+                      className="show-card__poster-img"
+                      src={posterPreview.dataUrl}
+                      alt="Vista previa de portada en cartelera"
+                    />
+                  </div>
+                  <div className="admin-poster-preview__meta">
+                    <strong>{posterPreview.fileName}</strong>
+                    <span>JPG · {posterPreview.sizeLabel} · Vista previa en cartelera (sin recorte)</span>
+                    <button
+                      className="button button--outline"
+                      type="button"
+                      onClick={clearPosterSelection}
+                    >
+                      Quitar portada
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <label>
               Género
               <select name="genre" required defaultValue="">
