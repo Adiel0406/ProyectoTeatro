@@ -18,6 +18,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-admin": "tsx prisma/seed-admin.ts",
+    "db:seed-superadmin": "tsx prisma/seed-superadmin.ts",
     "db:studio": "prisma studio",
     "test": "vitest run",
     "setup": "npm ci && docker compose up -d db && npm run db:deploy && npm run db:seed",

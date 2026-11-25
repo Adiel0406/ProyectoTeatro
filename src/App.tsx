@@ -304,7 +304,7 @@ function App() {
               ))}
             </div>
           </details>
-          {currentUser?.role === "ADMIN" && (
+          {(currentUser?.role === "ADMIN" || currentUser?.role === "SUPERADMIN") && (
             <button
               className="site-nav__action"
               type="button"
@@ -765,12 +765,20 @@ function App() {
           onAuthenticated={(user) => {
             setCurrentUser(user);
             setAuthDialogOpen(false);
-            showToast(user.role === "ADMIN" ? "Sesión de administrador iniciada." : "Sesión iniciada.");
+            showToast(
+              user.role === "SUPERADMIN"
+                ? "Sesión de superadministrador iniciada."
+                : user.role === "ADMIN"
+                  ? "Sesión de administrador iniciada."
+                  : "Sesión iniciada.",
+            );
           }}
         />
       )}
-      {adminPanelOpen && currentUser?.role === "ADMIN" && (
+      {adminPanelOpen &&
+        (currentUser?.role === "ADMIN" || currentUser?.role === "SUPERADMIN") && (
         <AdminDashboard
+          userRole={currentUser.role}
           onClose={() => setAdminPanelOpen(false)}
           onCatalogChanged={() => void loadCatalog()}
           notify={showToast}

@@ -23,7 +23,7 @@ try {
     select: { role: true },
   });
   if (existing) {
-    if (existing.role !== "ADMIN") {
+    if (existing.role !== "ADMIN" && existing.role !== "SUPERADMIN") {
       throw new Error("El CI configurado ya pertenece a una cuenta sin permisos de administrador.");
     }
     console.log("La cuenta de administrador ya está aprovisionada.");

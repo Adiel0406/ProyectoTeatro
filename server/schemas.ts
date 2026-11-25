@@ -51,6 +51,10 @@ export const profileSchema = z.object({
 
 export const adminReportPeriodSchema = z.enum(["week", "month", "year"]);
 
+export const adminRoleChangeSchema = z.object({
+  role: z.enum(["USER", "ADMIN"]),
+});
+
 const futureDateSchema = z.iso.datetime().refine(
   (value) => new Date(value).getTime() > Date.now(),
   "La función debe tener una fecha futura.",

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   accessCodeSchema,
+  adminRoleChangeSchema,
   adminReportPeriodSchema,
   createShowSchema,
   credentialsSchema,
@@ -70,6 +71,8 @@ describe("account and administrator schemas", () => {
     }).success).toBe(false);
     expect(adminReportPeriodSchema.safeParse("month").success).toBe(true);
     expect(adminReportPeriodSchema.safeParse("daily").success).toBe(false);
+    expect(adminRoleChangeSchema.safeParse({ role: "ADMIN" }).success).toBe(true);
+    expect(adminRoleChangeSchema.safeParse({ role: "SUPERADMIN" }).success).toBe(false);
   });
 
   it("rejects show schedules that do not have a future performance", () => {

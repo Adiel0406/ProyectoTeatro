@@ -33,7 +33,7 @@ export interface Workshop {
 export interface AuthUser {
   id: string;
   ci: string;
-  role: "USER" | "ADMIN";
+  role: "USER" | "ADMIN" | "SUPERADMIN";
 }
 
 export interface UserProfile extends AuthUser {

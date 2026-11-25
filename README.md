@@ -46,7 +46,7 @@ Para probar la versión compilada, ejecuta `npm run build` y después `npm start
 
 Las cuentas se registran con CI y contraseña; el servidor guarda las contraseñas con scrypt y utiliza sesiones opacas en cookies `HttpOnly`. Los códigos de administrador son aleatorios, de un solo uso, expiran y se almacenan como hashes.
 
-Para aprovisionar el primer administrador, configura `ADMIN_CI` y `ADMIN_PASSWORD` en el entorno de la terminal y ejecuta `npm run db:seed-admin`. No incluyas credenciales reales en `.env.example`, el repositorio ni los registros de comandos compartidos. Las cuentas nuevas son usuarios normales; un administrador autenticado genera códigos de acceso desde el panel para otorgar permisos de administrador. El panel permite revisar reservas, consultar cuentas e historial de accesos y funciones, y ver importes asociados a reservas por semana, mes o año. El sistema no procesa pagos y no identifica ni rastrea visitas anónimas. Las reservas se asocian a una cuenta solo cuando se realizan con una sesión iniciada.
+El administrador gestiona cartelera y reservas. El superadministrador tiene además acceso a todas las cuentas y sus historiales y es el único que puede otorgar o retirar el rol de administrador. Para aprovisionarlo, configura `SUPERADMIN_CI` y `SUPERADMIN_PASSWORD` como secretos y ejecuta `npm run db:seed-superadmin`; en Render se ejecuta al iniciar el servicio cuando ambas variables están definidas. No incluyas credenciales reales en el repositorio ni las compartas por chat. Las cuentas nuevas son usuarios normales. El sistema no procesa pagos y no identifica ni rastrea visitas anónimas. Las reservas se asocian a una cuenta solo cuando se realizan con una sesión iniciada.
 
 Las personas con cuenta pueden editar su nombre visible, biografía y frase favorita desde **Mi perfil**, además de consultar las reservas vinculadas a su sesión y el historial de accesos.
 
@@ -63,6 +63,7 @@ Las personas con cuenta pueden editar su nombre visible, biografía y frase favo
 | `npm run db:deploy` | Aplica migraciones existentes en despliegues |
 | `npm run db:seed` | Inserta datos de ejemplo de forma repetible |
 | `npm run db:seed-admin` | Aprovisiona el primer administrador desde `ADMIN_CI` y `ADMIN_PASSWORD` |
+| `npm run db:seed-superadmin` | Crea o eleva una cuenta desde `SUPERADMIN_CI` y `SUPERADMIN_PASSWORD` |
 | `npm run db:studio` | Abre Prisma Studio |
 
 ## API
@@ -82,7 +83,7 @@ La API devuelve errores con `{ "error": { "code": "...", "message": "..." } }`. 
 
 Configura `DATABASE_URL`, `PORT` y `WEB_ORIGIN` con valores del entorno de despliegue. Ejecuta `npm run db:deploy`, `npm run build` y `npm start`. La API compilada sirve los recursos del frontend desde `dist`.
 
-El usuario y contraseña de `docker-compose.yml` son solo para desarrollo local. Antes de aceptar datos reales, configura secretos seguros, HTTPS, política de privacidad/retención y controles operativos adecuados para el despliegue.
+El usuario y contraseña de `docker-compose.yml` son solo para desarrollo local. En producción, configura `DATABASE_URL`, `SUPERADMIN_CI` y `SUPERADMIN_PASSWORD` como secretos del proveedor. Antes de aceptar datos reales, configura secretos seguros, HTTPS, política de privacidad/retención y controles operativos adecuados para el despliegue.
 
 ## Si las máquinas muestran versiones diferentes
 

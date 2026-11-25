@@ -7,6 +7,7 @@ import helmet from "helmet";
 import { ZodError } from "zod";
 import {
   accessCodeSchema,
+  adminRoleChangeSchema,
   adminReportPeriodSchema,
   createPerformanceSchema,
   createShowSchema,
@@ -135,9 +136,22 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
   };
 
   const requireAdmin: RequestHandler = (_request, response, next) => {
-    if (response.locals.authUser?.role !== "ADMIN") {
+    if (
+      response.locals.authUser?.role !== "ADMIN" &&
+      response.locals.authUser?.role !== "SUPERADMIN"
+    ) {
       response.status(403).json({
         error: { code: "FORBIDDEN", message: "Esta acción requiere permisos de administrador." },
+      });
+      return;
+    }
+    next();
+  };
+
+  const requireSuperadmin: RequestHandler = (_request, response, next) => {
+    if (response.locals.authUser?.role !== "SUPERADMIN") {
+      response.status(403).json({
+        error: { code: "FORBIDDEN", message: "Esta acción requiere permisos de superadministrador." },
       });
       return;
     }
@@ -419,7 +433,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     });
   });
 
-  api.get("/admin/users", requireAuth, requireAdmin, async (_request, response) => {
+  api.get("/admin/users", requireAuth, requireSuperadmin, async (_request, response) => {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       select: {
@@ -446,7 +460,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     })));
   });
 
-  api.get("/admin/users/:id/history", requireAuth, requireAdmin, async (request, response) => {
+  api.get("/admin/users/:id/history", requireAuth, requireSuperadmin, async (request, response) => {
     const userId = idSchema.parse(request.params.id);
     const [user, reservations, accessEvents] = await Promise.all([
       prisma.user.findUnique({
@@ -493,7 +507,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     });
   });
 
-  api.get("/admin/access-events", requireAuth, requireAdmin, async (_request, response) => {
+  api.get("/admin/access-events", requireAuth, requireSuperadmin, async (_request, response) => {
     const events = await prisma.userAccessEvent.findMany({
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -505,6 +519,53 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       },
     });
     response.json(events);
+  });
+
+  api.patch("/admin/users/:id/role", requireAuth, requireSuperadmin, async (request, response) => {
+    const userId = idSchema.parse(request.params.id);
+    const input = adminRoleChangeSchema.parse(request.body);
+    if (userId === response.locals.authUser.id) {
+      response.status(409).json({
+        error: { code: "ROLE_CHANGE_NOT_ALLOWED", message: "No puedes cambiar tu propio rol de superadministrador." },
+      });
+      return;
+    }
+
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (!target) {
+      response.status(404).json({
+        error: { code: "USER_NOT_FOUND", message: "No se encontró la cuenta solicitada." },
+      });
+      return;
+    }
+    if (target.role === "SUPERADMIN") {
+      response.status(409).json({
+        error: { code: "ROLE_CHANGE_NOT_ALLOWED", message: "No se puede cambiar el rol de una cuenta de superadministrador." },
+      });
+      return;
+    }
+
+    if (target.role !== input.role) {
+      const updated = await prisma.$transaction(async (transaction) => {
+        const result = await transaction.user.updateMany({
+          where: { id: userId, role: target.role },
+          data: { role: input.role },
+        });
+        if (result.count !== 1) return false;
+        await transaction.authSession.deleteMany({ where: { userId } });
+        return true;
+      });
+      if (!updated) {
+        response.status(409).json({
+          error: { code: "ROLE_CHANGE_CONFLICT", message: "La cuenta cambió mientras se actualizaba. Recarga e inténtalo otra vez." },
+        });
+        return;
+      }
+    }
+    response.json({ id: userId, role: input.role });
   });
 
   api.get("/admin/shows", requireAuth, requireAdmin, async (_request, response) => {
@@ -545,7 +606,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     response.json({ active: input.active });
   });
 
-  api.get("/admin/access-codes", requireAuth, requireAdmin, async (_request, response) => {
+  api.get("/admin/access-codes", requireAuth, requireSuperadmin, async (_request, response) => {
     const accessCodes = await prisma.accessCode.findMany({
       orderBy: { createdAt: "desc" },
       select: {
@@ -561,7 +622,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     response.json(accessCodes);
   });
 
-  api.delete("/admin/access-codes/:id", requireAuth, requireAdmin, async (request, response) => {
+  api.delete("/admin/access-codes/:id", requireAuth, requireSuperadmin, async (request, response) => {
     const accessCodeId = idSchema.parse(request.params.id);
     const revoked = await prisma.accessCode.updateMany({
       where: {
@@ -584,7 +645,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     response.json({ revoked: true });
   });
 
-  api.post("/admin/access-codes", requireAuth, requireAdmin, async (request, response) => {
+  api.post("/admin/access-codes", requireAuth, requireSuperadmin, async (request, response) => {
     const input = accessCodeSchema.parse(request.body);
     const code = randomBytes(16).toString("hex").toUpperCase();
     const expiresAt = new Date(Date.now() + input.expiresInDays * 24 * 60 * 60 * 1000);

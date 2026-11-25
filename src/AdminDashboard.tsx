@@ -35,7 +35,7 @@ interface AdminAccessCode {
 interface AdminUser {
   id: string;
   ci: string;
-  role: "USER" | "ADMIN";
+  role: "USER" | "ADMIN" | "SUPERADMIN";
   displayName: string | null;
   bio: string | null;
   favoriteQuote: string | null;
@@ -92,15 +92,18 @@ function getFormValue(formData: FormData, name: string) {
 }
 
 export function AdminDashboard({
+  userRole,
   onClose,
   onCatalogChanged,
   notify,
 }: {
+  userRole: "ADMIN" | "SUPERADMIN";
   onClose: () => void;
   onCatalogChanged: () => void;
   notify: (message: string, tone?: ToastTone) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const isSuperadmin = userRole === "SUPERADMIN";
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [adminShows, setAdminShows] = useState<AdminShow[]>([]);
   const [accessCodes, setAccessCodes] = useState<AdminAccessCode[]>([]);
@@ -152,6 +155,7 @@ export function AdminDashboard({
   };
 
   const loadUsers = async () => {
+    if (!isSuperadmin) return;
     try {
       setUsers(await apiRequest<AdminUser[]>("/admin/users"));
     } catch (error) {
@@ -160,6 +164,7 @@ export function AdminDashboard({
   };
 
   const loadAccessEvents = async () => {
+    if (!isSuperadmin) return;
     try {
       setAccessEvents(await apiRequest<AdminAccessEvent[]>("/admin/access-events"));
     } catch (error) {
@@ -197,14 +202,16 @@ export function AdminDashboard({
     if (dialog && !dialog.open) dialog.showModal();
     void loadReservations();
     void loadAdminShows();
-    void loadAccessCodes();
-    void loadUsers();
-    void loadAccessEvents();
+    if (isSuperadmin) {
+      void loadAccessCodes();
+      void loadUsers();
+      void loadAccessEvents();
+    }
     void loadReport();
     return () => {
       if (dialog?.open) dialog.close();
     };
-  }, []);
+  }, [isSuperadmin]);
 
   const filteredReservations = useMemo(() => {
     const query = reservationSearch.trim().toLocaleLowerCase("es");
@@ -324,6 +331,26 @@ export function AdminDashboard({
     }
   };
 
+  const updateUserRole = async (user: AdminUser) => {
+    const role = user.role === "ADMIN" ? "USER" : "ADMIN";
+    setSubmitting(true);
+    try {
+      await apiRequest(`/admin/users/${encodeURIComponent(user.id)}/role`, {
+        method: "PATCH",
+        body: JSON.stringify({ role }),
+      });
+      notify(role === "ADMIN"
+        ? `Se otorgó el rol de administrador a CI ${user.ci}.`
+        : `Se retiraron los permisos de administrador a CI ${user.ci}.`);
+      await loadUsers();
+      if (selectedUserHistory?.user.id === user.id) await loadUserHistory(user.id);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "No se pudo actualizar el rol.", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const createShow = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -419,16 +446,20 @@ export function AdminDashboard({
             <strong>{activePerformances}</strong>
             <small>Se ocultan al terminar su duración</small>
           </article>
-          <article className="admin-metric">
-            <span>Invitaciones activas</span>
-            <strong>{activeAccessCodes}</strong>
-            <small>Disponibles para un registro</small>
-          </article>
-          <article className="admin-metric">
-            <span>Cuentas registradas</span>
-            <strong>{registeredUsers}</strong>
-            <small>Usuarios y administradores</small>
-          </article>
+          {isSuperadmin && (
+            <>
+              <article className="admin-metric">
+                <span>Invitaciones activas</span>
+                <strong>{activeAccessCodes}</strong>
+                <small>Disponibles para un registro</small>
+              </article>
+              <article className="admin-metric">
+                <span>Cuentas registradas</span>
+                <strong>{registeredUsers}</strong>
+                <small>Usuarios y administradores</small>
+              </article>
+            </>
+          )}
         </section>
 
         <section className="admin-section" aria-labelledby="admin-report-title">
@@ -498,11 +529,12 @@ export function AdminDashboard({
           )}
         </section>
 
+        {isSuperadmin && (
         <section className="admin-section" aria-labelledby="admin-users-title">
           <div className="admin-section__heading">
             <div>
               <p className="eyebrow"><span className="eyebrow__rule" />Cuentas</p>
-              <h3 id="admin-users-title">Usuarios e historial</h3>
+              <h3 id="admin-users-title">Usuarios, roles e historial</h3>
             </div>
             <button className="button button--outline" type="button" onClick={() => { void loadUsers(); void loadAccessEvents(); }}>
               Actualizar
@@ -521,13 +553,28 @@ export function AdminDashboard({
                     <tr key={user.id}>
                       <td>
                         <strong>{user.displayName || `CI ${user.ci}`}</strong>
-                        <span>CI {user.ci} · {user.role === "ADMIN" ? "Administrador" : "Usuario"}</span>
+                        <span>CI {user.ci} · {user.role === "SUPERADMIN"
+                          ? "Superadministrador"
+                          : user.role === "ADMIN"
+                            ? "Administrador"
+                            : "Usuario"}</span>
                         {user.bio && <span>{user.bio}</span>}
                       </td>
                       <td>{formatPerformanceDate(user.createdAt)}</td>
                       <td>{user.lastAccessAt ? formatPerformanceDate(user.lastAccessAt) : "Sin actividad"}</td>
                       <td>{user.accessCount} accesos · {user.reservationCount} reservas</td>
                       <td>
+                        {user.role !== "SUPERADMIN" && (
+                          <button
+                            className={`button ${user.role === "ADMIN" ? "button--outline" : "button--gold"}`}
+                            type="button"
+                            disabled={submitting}
+                            onClick={() => void updateUserRole(user)}
+                          >
+                            {user.role === "ADMIN" ? "Quitar admin" : "Hacer admin"}
+                          </button>
+                        )}
+                        {" "}
                         <button
                           className="button button--outline"
                           type="button"
@@ -583,7 +630,9 @@ export function AdminDashboard({
             </section>
           )}
         </section>
+        )}
 
+        {isSuperadmin && (
         <section className="admin-section" aria-labelledby="admin-access-events-title">
           <div className="admin-section__heading">
             <div>
@@ -608,6 +657,7 @@ export function AdminDashboard({
           )}
           <p className="admin-report-note">Se muestran accesos de cuentas registradas; las visitas anónimas al sitio no se identifican ni se rastrean.</p>
         </section>
+        )}
 
         <section className="admin-section" aria-labelledby="admin-reservations-title">
           <div className="admin-section__heading">
@@ -690,6 +740,7 @@ export function AdminDashboard({
           )}
         </section>
 
+        {isSuperadmin && (
         <section className="admin-section" aria-labelledby="admin-access-title">
           <div className="admin-section__heading">
             <div>
@@ -764,6 +815,7 @@ export function AdminDashboard({
             </div>
           )}
         </section>
+        )}
 
         <section className="admin-section" aria-labelledby="admin-shows-title">
           <div className="admin-section__heading">

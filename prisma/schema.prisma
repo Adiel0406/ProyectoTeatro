@@ -21,6 +21,7 @@ enum SeatStatus {
 enum UserRole {
   USER
   ADMIN
+  SUPERADMIN
 }
 
 enum UserAccessType {
