@@ -269,7 +269,7 @@ function App() {
   return (
     <>
       <a className="skip-link" href="#contenido">Saltar al contenido</a>
-      <header className="site-header" ref={headerRef}>
+      <header className={`site-header${menuOpen ? " is-menu-open" : ""}`} ref={headerRef}>
         <a className="brand" href="#inicio" aria-label="Teatro UCB, inicio">
           <img className="brand__mark" src="/teatro-ucb.svg" alt="" />
           <span className="brand__name">TEATRO <strong>UCB</strong></span>
@@ -284,6 +284,14 @@ function App() {
         >
           <span /><span /><span />
         </button>
+        {menuOpen && (
+          <button
+            className="nav-backdrop"
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
         <nav
           className={`site-nav${menuOpen ? " is-open" : ""}`}
           id="primary-navigation"
