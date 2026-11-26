@@ -96,6 +96,35 @@ interface ApiErrorBody {
   };
 }
 
+function isValidationDetail(value: unknown): value is { path: string; message: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "path" in value &&
+    typeof value.path === "string" &&
+    "message" in value &&
+    typeof value.message === "string"
+  );
+}
+
+function getApiErrorBody(value: unknown): ApiErrorBody {
+  if (typeof value !== "object" || value === null || !("error" in value)) {
+    return {};
+  }
+  const error = value.error;
+  if (typeof error !== "object" || error === null) {
+    return {};
+  }
+
+  const message = "message" in error && typeof error.message === "string"
+    ? error.message
+    : undefined;
+  const details = "details" in error && Array.isArray(error.details)
+    ? error.details.filter(isValidationDetail)
+    : undefined;
+  return { error: { message, details } };
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -110,28 +139,50 @@ export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(`/api${path}`, {
-    ...options,
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-  const result = (await response.json()) as T & ApiErrorBody;
+  let response: Response;
+  try {
+    response = await fetch(`/api${path}`, {
+      ...options,
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new ApiError(
+        "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+        0,
+      );
+    }
+    throw error;
+  }
+
+  const responseText = await response.text();
+  let result: unknown;
+  try {
+    result = JSON.parse(responseText);
+  } catch {
+    const message = response.ok
+      ? "El servidor devolvió una respuesta inválida."
+      : `El servidor devolvió un error HTTP ${response.status} sin detalles.`;
+    throw new ApiError(message, response.status);
+  }
 
   if (!response.ok) {
-    const validationDetails = result.error?.details
+    const error = getApiErrorBody(result).error;
+    const validationDetails = error?.details
       ?.map(({ path, message }) => `${path || "solicitud"}: ${message}`)
       .join("; ");
     throw new ApiError(
       [
-        result.error?.message ?? "No se pudo completar la solicitud.",
+        error?.message ?? "No se pudo completar la solicitud.",
         validationDetails,
       ].filter(Boolean).join(" "),
       response.status,
     );
   }
 
-  return result;
+  return result as T;
 }
