@@ -2812,3 +2812,118 @@ main,
     transition: none;
   }
 }
+
+.site-nav .site-nav__pages {
+  position: static;
+  width: 100%;
+  padding: 0.75rem 0.4rem 0.4rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.site-nav__section-label {
+  display: block;
+  padding: 0 0.45rem;
+  color: var(--color-gold);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.site-nav .site-nav__submenu {
+  position: static;
+  z-index: auto;
+  top: auto;
+  left: auto;
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+  margin: 0.35rem 0 0 0.5rem;
+  padding: 0.15rem 0 0.15rem 0.65rem;
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  animation: none;
+}
+
+.site-nav .site-nav__submenu a {
+  padding: 0.45rem 0.55rem;
+}
+
+.main-page {
+  min-height: calc(100vh - 100px);
+}
+
+.home-pages {
+  padding-top: 5rem;
+  padding-bottom: 6rem;
+}
+
+.home-pages__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 1rem;
+}
+
+.home-page-card {
+  position: relative;
+  display: flex;
+  min-height: 190px;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(circle at 100% 0%, rgb(212 175 55 / 9%), transparent 48%),
+    var(--color-surface);
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.home-page-card:hover {
+  transform: translateY(-4px);
+  border-color: rgb(212 175 55 / 48%);
+}
+
+.home-page-card__label {
+  padding-right: 1.5rem;
+  color: var(--color-text-light);
+  font-family: var(--font-primary);
+  font-size: 1.45rem;
+  line-height: 1.2;
+}
+
+.home-page-card__description {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.home-page-card__arrow {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 1.1rem;
+  color: var(--color-gold);
+}
+
+@media (max-width: 620px) {
+  .home-pages {
+    padding-top: 3.5rem;
+    padding-bottom: 4.5rem;
+  }
+
+  .home-pages__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page-card {
+    min-height: 150px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page-card {
+    transition: none;
+  }
+}

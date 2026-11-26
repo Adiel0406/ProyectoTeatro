@@ -23,6 +23,7 @@ import obra3 from "../assets/image/obra3.jpg";
 import obra4 from "../assets/image/obra 4.jpg";
 import { useScrollReveal } from "./useScrollReveal.ts";
 import { useOffline } from "./useOffline.ts";
+import { MAIN_PAGES, type MainPage } from "./mainPages.ts";
 
 // ─── Registro del Service Worker ─────────────────────────────────────────────
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
@@ -88,12 +89,15 @@ function SectionHeading({
   title,
   aside,
   headingId,
+  headingLevel = "h2",
 }: {
   eyebrow: string;
   title: string;
   aside: string;
   headingId: string;
+  headingLevel?: "h1" | "h2";
 }) {
+  const Heading = headingLevel;
   return (
     <div className="section-heading" data-scroll-reveal>
       <div>
@@ -101,14 +105,22 @@ function SectionHeading({
           <span className="eyebrow__rule" />
           {eyebrow}
         </p>
-        <h2 id={headingId}>{title}<span className="heading-period">.</span></h2>
+        <Heading id={headingId}>{title}<span className="heading-period">.</span></Heading>
       </div>
       <p className="section-heading__aside">{aside}</p>
     </div>
   );
 }
 
-function App() {
+const PAGE_DESCRIPTIONS: Record<Exclude<MainPage, "home">, string> = {
+  catalog: "Explora las obras en cartelera, consulta sus funciones y reserva tus butacas.",
+  experience: "Descubre el teatro como un espacio de encuentro, expresión y comunidad.",
+  archive: "Vuelve a encontrarte con las historias y montajes de temporadas pasadas.",
+  workshops: "Conoce los talleres disponibles y postula a las convocatorias abiertas.",
+  faq: "Encuentra respuestas sobre reservas, talleres y el funcionamiento del teatro.",
+};
+
+function App({ page }: { page: MainPage }) {
   const [shows, setShows] = useState<Show[]>([]);
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,7 +130,6 @@ function App() {
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("cartelera");
   const [favorites, setFavorites] = useState<string[]>(getInitialFavorites);
   const [favoritesOnly, setFavoritesOnly] = useState(getInitialFavoritesOnly);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -161,10 +172,19 @@ function App() {
   };
 
   useEffect(() => {
+    const currentPage = MAIN_PAGES.find((item) => item.slug === page);
+    document.title = `${currentPage?.label ?? "Teatro UCB"} | Teatro UCB`;
+  }, [page]);
+
+  useEffect(() => {
+    if (page !== "catalog" && page !== "workshops") {
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
     void loadCatalog(controller.signal);
     return () => controller.abort();
-  }, []);
+  }, [page]);
 
   // Reintento automático cuando vuelve la conexión
   useEffect(() => {
@@ -190,23 +210,6 @@ function App() {
       });
     return () => controller.abort();
   }, [showToast]);
-
-  useEffect(() => {
-    const sections = ["cartelera", "experiencia", "archivo", "talleres"]
-      .map((id) => document.getElementById(id))
-      .filter((section): section is HTMLElement => section !== null);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
-        if (visible) setActiveSection(visible.target.id);
-      },
-      { rootMargin: "-22% 0px -62% 0px", threshold: [0, 0.2, 0.5] },
-    );
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -299,7 +302,7 @@ function App() {
         </div>
       )}
       <header className={`site-header${menuOpen ? " is-menu-open" : ""}`} ref={headerRef}>
-        <a className="brand" href="#inicio" aria-label="Teatro UCB, inicio">
+        <a className="brand" href="/" aria-label="Teatro UCB, inicio">
           <img className="brand__mark" src="/teatro-ucb.svg" alt="" />
           <span className="brand__name">TEATRO <strong>UCB</strong></span>
         </a>
@@ -326,30 +329,27 @@ function App() {
           id="primary-navigation"
           aria-label="Navegación principal"
         >
-          {[
-            ["Cartelera", "#cartelera"],
-            ["La experiencia", "#experiencia"],
-            ["Archivo", "#archivo"],
-            ["Talleres", "#talleres"],
-          ].map(([label, href]) => (
+          {MAIN_PAGES.map(({ slug, path, label }) => (
             <a
-              className={`site-nav__link${activeSection === href.slice(1) ? " is-active" : ""}`}
-              href={href}
-              key={href}
-              aria-current={activeSection === href.slice(1) ? "location" : undefined}
+              className={`site-nav__link${page === slug ? " is-active" : ""}`}
+              href={path}
+              key={slug}
+              aria-current={page === slug ? "page" : undefined}
               onClick={() => setMenuOpen(false)}
             >
               {label}
             </a>
           ))}
-          <details className="site-nav__pages">
-            <summary className="site-nav__link">Descubre</summary>
+          <div className="site-nav__pages">
+            <span className="site-nav__section-label">Descubre</span>
             <div className="site-nav__submenu">
-              {INFO_PAGES.map((page) => (
-                <a href={page.path} key={page.slug}>{page.label}</a>
+              {INFO_PAGES.map((item) => (
+                <a href={item.path} key={item.slug} onClick={() => setMenuOpen(false)}>
+                  {item.label}
+                </a>
               ))}
             </div>
-          </details>
+          </div>
           {(currentUser?.role === "ADMIN" || currentUser?.role === "SUPERADMIN") && (
             <button
               className="site-nav__action"
@@ -398,7 +398,7 @@ function App() {
           </button>
           <a
             className="button button--small button--gold"
-            href="#cartelera"
+            href="/cartelera"
             onClick={() => setMenuOpen(false)}
           >
             Reservar
@@ -407,7 +407,9 @@ function App() {
       </header>
       {toast && <Toast toast={toast} onDismiss={dismissToast} />}
 
-      <main id="contenido">
+      <main id="contenido" className={`main-page main-page--${page}`}>
+        {page === "home" && (
+          <>
         <section className="hero" id="inicio" aria-labelledby="hero-title">
           <div className="hero__content">
             <p className="eyebrow"><span className="eyebrow__rule" />Temporada escénica 2026</p>
@@ -416,7 +418,7 @@ function App() {
               El teatro no forma actores, forma personas con carácter y conciencia
               para mostrar la realidad del mundo. Encuentra tu próxima función en Teatro UCB.
             </p>
-            <a className="button button--gold" href="#cartelera">
+            <a className="button button--gold" href="/cartelera">
               Explorar cartelera <span aria-hidden="true">↗</span>
             </a>
             <div className="hero__note">
@@ -434,12 +436,35 @@ function App() {
             </div>
             <span className="hero__art-caption">CULTURA · ARTE · ENCUENTRO</span>
           </div>
-          <a className="hero__scroll" href="#cartelera" aria-label="Ir a la cartelera">↓</a>
+          <a className="hero__scroll" href="/cartelera" aria-label="Ir a la cartelera">↓</a>
         </section>
+            <section className="home-pages section-shell" aria-labelledby="home-pages-title">
+              <SectionHeading
+                headingId="home-pages-title"
+                eyebrow="Explora Teatro UCB"
+                title="Elige tu próxima historia"
+                aside="Cada espacio tiene su propia página."
+              />
+              <div className="home-pages__grid">
+                {MAIN_PAGES.filter((item) => item.slug !== "home").map((item) => (
+                  <a className="home-page-card" href={item.path} key={item.slug}>
+                    <span className="home-page-card__label">{item.label}</span>
+                    <span className="home-page-card__description">
+                      {PAGE_DESCRIPTIONS[item.slug]}
+                    </span>
+                    <span className="home-page-card__arrow" aria-hidden="true">↗</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
 
+        {page === "catalog" && (
         <section className="lineup section-shell" id="cartelera" aria-labelledby="lineup-title">
           <SectionHeading
             headingId="lineup-title"
+            headingLevel="h1"
             eyebrow="En escena"
             title="La cartelera"
             aside={"Elige una historia.\nNosotros ponemos el escenario."}
@@ -625,13 +650,15 @@ function App() {
             </div>
           )}
         </section>
+        )}
 
+        {page === "experience" && (
         <section className="experience" id="experiencia" aria-labelledby="experience-title">
           <div className="experience__content" data-scroll-reveal>
             <p className="eyebrow eyebrow--light"><span className="eyebrow__rule" />Más que una función</p>
-            <h2 id="experience-title">El teatro se vive<br />en <em>compañía.</em></h2>
+            <h1 id="experience-title">El teatro se vive<br />en <em>compañía.</em></h1>
             <p>Ven por la historia. Quédate por lo que despierta. Nos encontramos bajo el mismo telón.</p>
-            <a className="text-link" href="#cartelera">Encuentra tu próxima función <span aria-hidden="true">↗</span></a>
+            <a className="text-link" href="/cartelera">Encuentra tu próxima función <span aria-hidden="true">↗</span></a>
           </div>
           <div className="experience__ornament" data-scroll-reveal aria-hidden="true">
             <span className="experience__ring" />
@@ -639,11 +666,14 @@ function App() {
             <span className="experience__vertical">TEATRO UNIVERSITARIO · UCB</span>
           </div>
         </section>
+        )}
 
+        {page === "archive" && (
         <section className="archive" id="archivo" aria-labelledby="archive-title">
           <div className="archive__inner">
             <SectionHeading
               headingId="archive-title"
+              headingLevel="h1"
               eyebrow="Archivo histórico"
               title="Obras pasadas"
               aside={"Postales de las obras\ny momentos que dejaron huella."}
@@ -726,10 +756,13 @@ function App() {
             </div>
           </div>
         </section>
+        )}
 
+        {page === "workshops" && (
         <section className="lineup section-shell" id="talleres" aria-labelledby="workshops-title">
           <SectionHeading
             headingId="workshops-title"
+            headingLevel="h1"
             eyebrow="Súbete al escenario"
             title="Talleres y convocatorias"
             aside={"Aprende, ensaya\ny forma parte de la compañía."}
@@ -769,10 +802,13 @@ function App() {
             <p className="form-feedback">Pronto anunciaremos nuevos talleres.</p>
           ) : null}
         </section>
+        )}
 
+        {page === "faq" && (
         <section className="lineup section-shell" id="faq" aria-labelledby="faq-title">
           <SectionHeading
             headingId="faq-title"
+            headingLevel="h1"
             eyebrow="Información útil"
             title="Preguntas frecuentes"
             aside={"Resolvemos tus dudas sobre\nfunciones y talleres."}
@@ -807,15 +843,19 @@ function App() {
             </details>
           </div>
         </section>
+        )}
       </main>
 
       <footer className="site-footer">
-        <a className="brand brand--footer" href="#inicio">
+        <a className="brand brand--footer" href="/">
           <img className="brand__mark" src="/teatro-ucb.svg" alt="" />
           <span className="brand__name">TEATRO <strong>UCB</strong></span>
         </a>
         <p>Una universidad, muchas historias.</p>
         <nav className="site-footer__nav" aria-label="Páginas del teatro">
+          {MAIN_PAGES.map((item) => (
+            <a href={item.path} key={item.slug}>{item.label}</a>
+          ))}
           {INFO_PAGES.map((page) => (
             <a href={page.path} key={page.slug}>{page.label}</a>
           ))}

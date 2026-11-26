@@ -7,6 +7,7 @@ import galeria3 from "../assets/image/galeria3.jpg";
 import galeria4 from "../assets/image/galeria4.jpg";
 import galeria5 from "../assets/image/galeria5.jpg";
 import { INFO_PAGES, type InfoPageSlug } from "./infoPages.ts";
+import { MAIN_PAGES } from "./mainPages.ts";
 import { useScrollReveal } from "./useScrollReveal.ts";
 
 const PAGE_DETAILS: Record<InfoPageSlug, { eyebrow: string; title: string; intro: string }> = {
@@ -174,7 +175,7 @@ export function InfoPage({ page }: { page: InfoPageSlug }) {
     <div className="info-site">
       <a className="skip-link" href="#contenido">Saltar al contenido</a>
       <header className="site-header">
-        <a className="brand" href="/#inicio" aria-label="Teatro UCB, inicio">
+        <a className="brand" href="/" aria-label="Teatro UCB, inicio">
           <img className="brand__mark" src="/teatro-ucb.svg" alt="" />
           <span className="brand__name">TEATRO <strong>UCB</strong></span>
         </a>
@@ -188,25 +189,44 @@ export function InfoPage({ page }: { page: InfoPageSlug }) {
         >
           <span /><span /><span />
         </button>
+        {menuOpen && (
+          <button
+            className="nav-backdrop"
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
         <nav
           className={`site-nav${menuOpen ? " is-open" : ""}`}
           id="info-navigation"
           aria-label="Navegación principal"
         >
-          <a className="site-nav__link" href="/#cartelera" onClick={() => setMenuOpen(false)}>
-            Cartelera
-          </a>
-          {INFO_PAGES.map((item) => (
+          {MAIN_PAGES.map((item) => (
             <a
-              className={`site-nav__link${page === item.slug ? " is-active" : ""}`}
+              className="site-nav__link"
               href={item.path}
               key={item.slug}
-              aria-current={page === item.slug ? "page" : undefined}
               onClick={() => setMenuOpen(false)}
             >
               {item.label}
             </a>
           ))}
+          <div className="site-nav__pages">
+            <span className="site-nav__section-label">Descubre</span>
+            <div className="site-nav__submenu">
+              {INFO_PAGES.map((item) => (
+                <a
+                  href={item.path}
+                  key={item.slug}
+                  aria-current={page === item.slug ? "page" : undefined}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </div>
           <button
             className="button button--small button--theme"
             type="button"
@@ -218,7 +238,7 @@ export function InfoPage({ page }: { page: InfoPageSlug }) {
           </button>
           <a
             className="button button--small button--gold"
-            href="/#cartelera"
+            href="/cartelera"
             onClick={() => setMenuOpen(false)}
           >
             Reservar
@@ -232,7 +252,7 @@ export function InfoPage({ page }: { page: InfoPageSlug }) {
             <p className="eyebrow"><span className="eyebrow__rule" />{details.eyebrow}</p>
             <h1 id="info-title">{details.title}</h1>
             <p>{details.intro}</p>
-            <a className="button button--gold" href="/#cartelera">
+            <a className="button button--gold" href="/cartelera">
               Explorar cartelera <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -282,7 +302,7 @@ export function InfoPage({ page }: { page: InfoPageSlug }) {
                 </article>
               ))}
             </div>
-            <a className="button button--outline" href="/#cartelera">
+            <a className="button button--outline" href="/cartelera">
               Ver obras en cartelera <span aria-hidden="true">↗</span>
             </a>
           </section>
@@ -414,13 +434,13 @@ export function InfoPage({ page }: { page: InfoPageSlug }) {
                 <span className="info-contact-card__icon" aria-hidden="true">01</span>
                 <h3>Reservas</h3>
                 <p>Elige una obra, selecciona tu función y reserva hasta cuatro butacas desde la cartelera.</p>
-                <a className="text-link" href="/#cartelera">Ir a la cartelera <span aria-hidden="true">↗</span></a>
+                <a className="text-link" href="/cartelera">Ir a la cartelera <span aria-hidden="true">↗</span></a>
               </article>
               <article className="info-contact-card" data-scroll-reveal>
                 <span className="info-contact-card__icon" aria-hidden="true">02</span>
                 <h3>Talleres</h3>
                 <p>Consulta horarios y cupos. Al postular, la coordinación podrá responderte por correo o WhatsApp.</p>
-                <a className="text-link" href="/#talleres">Ver talleres <span aria-hidden="true">↗</span></a>
+                <a className="text-link" href="/talleres">Ver talleres <span aria-hidden="true">↗</span></a>
               </article>
               <article className="info-contact-card info-contact-card--venue" data-scroll-reveal>
                 <span className="info-contact-card__icon" aria-hidden="true">03</span>
@@ -433,7 +453,7 @@ export function InfoPage({ page }: { page: InfoPageSlug }) {
       </main>
 
       <footer className="site-footer info-page__footer">
-        <a className="brand brand--footer" href="/#inicio">
+        <a className="brand brand--footer" href="/">
           <img className="brand__mark" src="/teatro-ucb.svg" alt="" />
           <span className="brand__name">TEATRO <strong>UCB</strong></span>
         </a>

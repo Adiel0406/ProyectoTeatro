@@ -365,7 +365,9 @@ button {
 }
 
 .hero h1,
+.section-heading h1,
 .section-heading h2,
+.experience h1,
 .experience h2,
 .booking-heading h2,
 .dialog__panel h2 {
@@ -381,6 +383,7 @@ button {
 }
 
 .hero h1 em,
+.experience h1 em,
 .experience h2 em,
 .booking-heading h2 em,
 .dialog__panel h2 em {
@@ -647,6 +650,7 @@ button {
   margin-bottom: 2.5rem;
 }
 
+.section-heading h1,
 .section-heading h2 {
   margin-top: 0.8rem;
   font-size: clamp(2.8rem, 5vw, 4.3rem);
@@ -1099,6 +1103,7 @@ button {
   color: #e1c578;
 }
 
+.experience h1,
 .experience h2 {
   margin: 1.1rem 0;
   font-size: clamp(2.7rem, 5vw, 4.2rem);
@@ -2573,6 +2578,7 @@ summary:focus-visible {
     margin-bottom: 1.5rem;
   }
 
+  .section-heading h1,
   .section-heading h2 {
     font-size: 3rem;
   }
@@ -2621,6 +2627,7 @@ summary:focus-visible {
     padding: 3.7rem 1.4rem;
   }
 
+  .experience h1,
   .experience h2 {
     font-size: 2.8rem;
   }
@@ -2748,6 +2755,7 @@ summary:focus-visible {
   background-color: var(--accent-amber);
 }
 
+.section-heading h1,
 .section-heading h2 {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(2rem, 4vw, 3rem);
@@ -2930,6 +2938,7 @@ html[data-theme="light"] .section-shell {
   color: var(--page-foreground);
 }
 
+html[data-theme="light"] .section-heading h1,
 html[data-theme="light"] .section-heading h2,
 html[data-theme="light"] .workshop__title,
 html[data-theme="light"] .faq-card__question,

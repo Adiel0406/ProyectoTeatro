@@ -91,7 +91,7 @@
 }
 
 .info-site .site-header {
-  position: sticky;
+  position: fixed;
   top: 0;
 }
 
