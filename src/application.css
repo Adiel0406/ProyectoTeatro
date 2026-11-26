@@ -505,6 +505,46 @@
   white-space: nowrap;
 }
 
+.profile-review {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.profile-review > div:first-child {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.profile-review > div:first-child span,
+.profile-review__submitted small {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+}
+
+.profile-review__form {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.profile-review__submitted {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+}
+
+.profile-review__submitted strong {
+  color: var(--color-gold);
+}
+
+.profile-review__submitted p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 .admin-show-list,
 .admin-code-list {
   display: grid;
@@ -539,6 +579,13 @@
 .admin-code-row > div > span {
   color: var(--color-text-muted);
   font-size: 0.7rem;
+}
+
+.admin-show-row > div > p {
+  margin: 0.4rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
 }
 
 .admin-show-row > .button,
@@ -953,6 +1000,37 @@ html[data-theme="light"] .review {
   transform: translateY(-6px) rotate(-45deg);
 }
 
+@keyframes navigation-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.site-nav.is-open {
+  animation: navigation-enter 220ms ease both;
+}
+
+.site-nav.is-open > * {
+  animation: navigation-enter 260ms ease both;
+}
+
+.site-nav.is-open > :nth-child(2) {
+  animation-delay: 25ms;
+}
+
+.site-nav.is-open > :nth-child(3) {
+  animation-delay: 50ms;
+}
+
+.site-nav.is-open > :nth-child(4) {
+  animation-delay: 75ms;
+}
+
 .filter-favorites {
   display: inline-flex;
   min-height: 42px;
@@ -1244,8 +1322,11 @@ html[data-theme="light"] .admin-performance-details li {
   .site-nav__link::after,
   .nav-toggle span,
   .favorite-toggle,
-  .filter-favorites {
+  .filter-favorites,
+  .site-nav.is-open,
+  .site-nav.is-open > * {
     transition: none;
+    animation: none;
   }
 }
 

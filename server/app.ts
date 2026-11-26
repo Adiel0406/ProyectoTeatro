@@ -11,9 +11,11 @@ import {
   adminReportPeriodSchema,
   createPerformanceSchema,
   createShowSchema,
+  createWorkshopSchema,
   credentialsSchema,
   decodeJpegPosterDataUrl,
   idSchema,
+  performanceReviewSchema,
   profileSchema,
   registrationSchema,
   reservationSchema,
@@ -46,6 +48,15 @@ function isPrismaCode(error: unknown, code: string): boolean {
     "code" in error &&
     error.code === code
   );
+}
+
+function createSlugBase(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("en")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 export function createApp(prisma: PrismaClient, webOrigin: string) {
@@ -346,7 +357,15 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
         where: { userId },
         orderBy: { createdAt: "desc" },
         include: {
-          performance: { include: { show: { select: { title: true } } } },
+          performance: {
+            include: {
+              show: { select: { title: true } },
+              reviews: {
+                where: { userId },
+                select: { id: true, rating: true, comment: true, createdAt: true },
+              },
+            },
+          },
           seats: { include: { seat: { select: { code: true } } } },
         },
       }),
@@ -359,11 +378,59 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     response.json({
       reservations: reservations.map(({ seats, performance, ...reservation }) => ({
         ...reservation,
-        performance: { ...performance, show: performance.show },
+        performance: {
+          id: performance.id,
+          startsAt: performance.startsAt,
+          endsAt: performance.endsAt,
+          show: performance.show,
+          review: performance.reviews[0] ?? null,
+        },
         seatCodes: seats.map(({ seat }) => seat.code).sort(),
       })),
       accessEvents,
     });
+  });
+
+  api.post("/account/reviews", requireAuth, async (request, response) => {
+    const input = performanceReviewSchema.parse(request.body);
+    const reservation = await prisma.reservation.findFirst({
+      where: {
+        userId: response.locals.authUser.id,
+        performanceId: input.performanceId,
+        seats: { some: {} },
+      },
+      select: { performance: { select: { endsAt: true } } },
+    });
+    if (!reservation || reservation.performance.endsAt > new Date()) {
+      response.status(403).json({
+        error: {
+          code: "REVIEW_NOT_ALLOWED",
+          message: "Solo puedes opinar después de una función para la que reservaste butacas.",
+        },
+      });
+      return;
+    }
+
+    try {
+      const review = await prisma.performanceReview.create({
+        data: {
+          userId: response.locals.authUser.id,
+          performanceId: input.performanceId,
+          rating: input.rating,
+          comment: input.comment,
+        },
+        select: { id: true, rating: true, comment: true, createdAt: true },
+      });
+      response.status(201).json({ review });
+    } catch (error) {
+      if (isPrismaCode(error, "P2002")) {
+        response.status(409).json({
+          error: { code: "REVIEW_ALREADY_SENT", message: "Ya enviaste una opinión para esta función." },
+        });
+        return;
+      }
+      throw error;
+    }
   });
 
   api.post("/auth/logout", async (request, response) => {
@@ -528,6 +595,27 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       },
     });
     response.json(events);
+  });
+
+  api.get("/admin/reviews", requireAuth, requireAdmin, async (_request, response) => {
+    const reviews = await prisma.performanceReview.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        createdAt: true,
+        user: { select: { displayName: true } },
+        performance: {
+          select: {
+            startsAt: true,
+            show: { select: { title: true } },
+          },
+        },
+      },
+    });
+    response.json(reviews);
   });
 
   api.patch("/admin/users/:id/role", requireAuth, requireSuperadmin, async (request, response) => {
@@ -719,12 +807,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       return;
     }
 
-    const slugBase = input.title
-      .normalize("NFKD")
-      .replace(/\p{Diacritic}/gu, "")
-      .toLocaleLowerCase("en")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+    const slugBase = createSlugBase(input.title);
     const posterStyle = {
       DRAMA: "bernarda",
       COMEDIA: "summer",
@@ -782,6 +865,83 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       }
       throw error;
     }
+  });
+
+  api.get("/admin/workshops", requireAuth, requireAdmin, async (_request, response) => {
+    const workshops = await prisma.workshop.findMany({
+      orderBy: [{ active: "desc" }, { title: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        schedule: true,
+        teacher: true,
+        capacity: true,
+        enrolledSeats: true,
+        active: true,
+        _count: { select: { applications: true } },
+      },
+    });
+    response.json(workshops.map(({ _count, ...workshop }) => ({
+      ...workshop,
+      applicationCount: _count.applications,
+    })));
+  });
+
+  api.post("/admin/workshops", requireAuth, requireAdmin, async (request, response) => {
+    const input = createWorkshopSchema.parse(request.body);
+    const workshop = await prisma.workshop.create({
+      data: {
+        slug: `${createSlugBase(input.title)}-${randomBytes(3).toString("hex")}`,
+        title: input.title,
+        description: input.description,
+        schedule: input.schedule,
+        teacher: input.teacher,
+        capacity: input.capacity,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        schedule: true,
+        teacher: true,
+        capacity: true,
+        enrolledSeats: true,
+        active: true,
+      },
+    });
+    response.status(201).json({ workshop });
+  });
+
+  api.patch("/admin/workshops/:id", requireAuth, requireAdmin, async (request, response) => {
+    const workshopId = idSchema.parse(request.params.id);
+    const input = showStatusSchema.parse(request.body);
+    const updated = await prisma.workshop.updateMany({
+      where: { id: workshopId },
+      data: { active: input.active },
+    });
+    if (updated.count !== 1) {
+      response.status(404).json({
+        error: { code: "WORKSHOP_NOT_FOUND", message: "No se encontró el taller solicitado." },
+      });
+      return;
+    }
+    response.json({ active: input.active });
+  });
+
+  api.get("/admin/workshop-applications", requireAuth, requireAdmin, async (_request, response) => {
+    const applications = await prisma.workshopApplication.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 500,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        workshop: { select: { id: true, title: true, schedule: true } },
+      },
+    });
+    response.json(applications);
   });
 
   api.get("/health", async (_request, response) => {

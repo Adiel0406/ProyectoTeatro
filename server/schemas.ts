@@ -107,5 +107,19 @@ export const createShowSchema = z.object({
 
 export const createPerformanceSchema = z.object(performanceFields);
 
+export const createWorkshopSchema = z.object({
+  title: z.string().trim().min(2).max(120),
+  description: z.string().trim().min(10).max(2000),
+  schedule: z.string().trim().min(3).max(200),
+  teacher: z.string().trim().min(2).max(120),
+  capacity: z.number().int().min(1).max(500),
+});
+
+export const performanceReviewSchema = z.object({
+  performanceId: z.string().uuid(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().trim().min(10).max(1200),
+});
+
 export type ReservationInput = z.infer<typeof reservationSchema>;
 export type WorkshopApplicationInput = z.infer<typeof workshopApplicationSchema>;

@@ -28,6 +28,8 @@ export function UserProfileDialog({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [reviewSubmittingId, setReviewSubmittingId] = useState("");
+  const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -78,6 +80,56 @@ export function UserProfileDialog({
       setSaving(false);
     }
   };
+
+  const submitReview = async (
+    event: FormEvent<HTMLFormElement>,
+    performanceId: string,
+  ) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    setReviewSubmittingId(performanceId);
+    setReviewError("");
+    try {
+      const result = await apiRequest<{ review: NonNullable<AccountReservation["performance"]["review"]> }>(
+        "/account/reviews",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            performanceId,
+            rating: Number(formData.get("rating")),
+            comment: String(formData.get("comment") ?? ""),
+          }),
+        },
+      );
+      setReservations((current) => current.map((reservation) =>
+        reservation.performance.id === performanceId
+          ? { ...reservation, performance: { ...reservation.performance, review: result.review } }
+          : reservation,
+      ));
+      form.reset();
+      notify("Tu opinión fue enviada de forma privada al equipo del teatro.");
+    } catch (submitError) {
+      const message = submitError instanceof Error ? submitError.message : "No se pudo enviar la opinión.";
+      setReviewError(message);
+      notify(message, "error");
+    } finally {
+      setReviewSubmittingId("");
+    }
+  };
+
+  const completedPerformances = Array.from(
+    reservations.reduce((unique, reservation) => {
+      const performanceId = reservation.performance.id;
+      if (
+        new Date(reservation.performance.endsAt).getTime() <= Date.now() &&
+        !unique.has(performanceId)
+      ) {
+        unique.set(performanceId, reservation);
+      }
+      return unique;
+    }, new Map<string, AccountReservation>()).values(),
+  );
 
   return (
     <dialog
@@ -149,6 +201,57 @@ export function UserProfileDialog({
                     </li>
                   ))}
                 </ul>
+              )}
+            </section>
+            <section className="admin-section" aria-labelledby="profile-reviews-title">
+              <h3 id="profile-reviews-title" className="profile-section-title">Opiniones de funciones finalizadas</h3>
+              <p className="profile-identity">Solo el equipo administrador podrá leer tus opiniones.</p>
+              {completedPerformances.length === 0 ? (
+                <p className="admin-empty">Cuando termine una función que reservaste, podrás compartir tu opinión aquí.</p>
+              ) : (
+                <div className="profile-history">
+                  {completedPerformances.map((reservation) => (
+                    <article className="profile-review" key={reservation.performance.id}>
+                      <div>
+                        <strong>{reservation.performance.show.title}</strong>
+                        <span>{formatProfileDate(reservation.performance.startsAt)}</span>
+                      </div>
+                      {reservation.performance.review ? (
+                        <div className="profile-review__submitted" role="status">
+                          <strong>Tu valoración: {reservation.performance.review.rating}/5</strong>
+                          <p>{reservation.performance.review.comment}</p>
+                          <small>Enviada {formatProfileDate(reservation.performance.review.createdAt)}</small>
+                        </div>
+                      ) : (
+                        <form
+                          className="admin-form profile-review__form"
+                          onSubmit={(event) => void submitReview(event, reservation.performance.id)}
+                        >
+                          <label>
+                            Valoración
+                            <select name="rating" defaultValue="5">
+                              {[5, 4, 3, 2, 1].map((rating) => (
+                                <option value={rating} key={rating}>{rating} de 5</option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="admin-form__wide">
+                            Tu opinión
+                            <textarea name="comment" minLength={10} maxLength={1200} rows={3} required />
+                          </label>
+                          {reviewError && <p className="form-feedback admin-form__wide" role="alert">{reviewError}</p>}
+                          <button
+                            className="button button--gold"
+                            type="submit"
+                            disabled={reviewSubmittingId === reservation.performance.id}
+                          >
+                            {reviewSubmittingId === reservation.performance.id ? "Enviando..." : "Enviar opinión"}
+                          </button>
+                        </form>
+                      )}
+                    </article>
+                  ))}
+                </div>
               )}
             </section>
           </>

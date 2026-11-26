@@ -40,6 +40,7 @@ model User {
   sessions       AuthSession[]
   accessEvents   UserAccessEvent[]
   reservations   Reservation[]
+  reviews        PerformanceReview[]
   accessCodes    AccessCode[]  @relation("CreatedAccessCodes")
   usedAccessCode AccessCode?   @relation("UsedAccessCode")
   createdAt      DateTime      @default(now())
@@ -120,6 +121,7 @@ model Performance {
   show         Show          @relation(fields: [showId], references: [id], onDelete: Cascade)
   seats        Seat[]
   reservations Reservation[]
+  reviews      PerformanceReview[]
   createdAt    DateTime      @default(now())
 
   @@unique([showId, startsAt])
@@ -165,6 +167,20 @@ model ReservationSeat {
   seat          Seat        @relation(fields: [seatId], references: [id], onDelete: Restrict)
 
   @@id([reservationId, seatId])
+}
+
+model PerformanceReview {
+  id            String      @id @default(uuid())
+  userId        String
+  performanceId String
+  rating        Int
+  comment       String
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  performance   Performance @relation(fields: [performanceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, performanceId])
+  @@index([performanceId, createdAt])
 }
 
 model Workshop {

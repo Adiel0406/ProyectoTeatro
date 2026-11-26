@@ -51,9 +51,19 @@ export interface AccountReservation {
   createdAt: string;
   seatCodes: string[];
   performance: {
+    id: string;
     startsAt: string;
+    endsAt: string;
     show: { title: string };
+    review: PerformanceReview | null;
   };
+}
+
+export interface PerformanceReview {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
 }
 
 export interface UserAccessEvent {

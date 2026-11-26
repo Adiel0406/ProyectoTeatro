@@ -37,6 +37,22 @@
   box-shadow: var(--shadow-lg);
 }
 
+@keyframes menu-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.45rem) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.site-nav__pages[open] > .site-nav__submenu {
+  transform-origin: top;
+  animation: menu-content-enter 180ms ease both;
+}
+
 .site-nav__submenu a {
   padding: 0.65rem 0.8rem;
   color: var(--color-text-muted);
@@ -48,6 +64,10 @@
 .site-nav__submenu a:focus-visible {
   background: var(--color-surface);
   color: var(--color-gold);
+}
+
+.accordion-card[open] > .accordion-card__body {
+  animation: menu-content-enter 240ms ease both;
 }
 
 .site-footer__nav,
@@ -844,5 +864,10 @@ html.has-scroll-reveal .info-gallery__item.is-visible:hover {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  .site-nav__pages[open] > .site-nav__submenu,
+  .accordion-card[open] > .accordion-card__body {
+    animation: none;
   }
 }

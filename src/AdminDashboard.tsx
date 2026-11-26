@@ -68,6 +68,35 @@ interface AdminAccessEvent {
   user: { id: string; ci: string; displayName: string | null };
 }
 
+interface AdminWorkshop {
+  id: string;
+  title: string;
+  description: string;
+  schedule: string;
+  teacher: string;
+  capacity: number;
+  enrolledSeats: number;
+  active: boolean;
+  applicationCount: number;
+}
+
+interface AdminWorkshopApplication {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+  workshop: { id: string; title: string; schedule: string };
+}
+
+interface AdminPerformanceReview {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  user: { displayName: string | null };
+  performance: { startsAt: string; show: { title: string } };
+}
+
 const periodLabels = {
   week: "esta semana",
   month: "este mes",
@@ -139,6 +168,9 @@ export function AdminDashboard({
   const isSuperadmin = userRole === "SUPERADMIN";
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [adminShows, setAdminShows] = useState<AdminShow[]>([]);
+  const [workshops, setWorkshops] = useState<AdminWorkshop[]>([]);
+  const [workshopApplications, setWorkshopApplications] = useState<AdminWorkshopApplication[]>([]);
+  const [performanceReviews, setPerformanceReviews] = useState<AdminPerformanceReview[]>([]);
   const [accessCodes, setAccessCodes] = useState<AdminAccessCode[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [accessEvents, setAccessEvents] = useState<AdminAccessEvent[]>([]);
@@ -163,6 +195,7 @@ export function AdminDashboard({
     sizeLabel: string;
   } | null>(null);
   const [posterError, setPosterError] = useState("");
+  const [loadingWorkshops, setLoadingWorkshops] = useState(true);
 
   const loadReservations = async () => {
     setLoadingReservations(true);
@@ -183,6 +216,24 @@ export function AdminDashboard({
       setLoadError(error instanceof Error ? error.message : "No se pudo cargar la cartelera administrativa.");
     } finally {
       setLoadingShows(false);
+    }
+  };
+
+  const loadWorkshops = async () => {
+    setLoadingWorkshops(true);
+    try {
+      const [adminWorkshopList, applications, reviews] = await Promise.all([
+        apiRequest<AdminWorkshop[]>("/admin/workshops"),
+        apiRequest<AdminWorkshopApplication[]>("/admin/workshop-applications"),
+        apiRequest<AdminPerformanceReview[]>("/admin/reviews"),
+      ]);
+      setWorkshops(adminWorkshopList);
+      setWorkshopApplications(applications);
+      setPerformanceReviews(reviews);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "No se pudieron cargar talleres y opiniones.");
+    } finally {
+      setLoadingWorkshops(false);
     }
   };
 
@@ -242,6 +293,7 @@ export function AdminDashboard({
     if (dialog && !dialog.open) dialog.showModal();
     void loadReservations();
     void loadAdminShows();
+    void loadWorkshops();
     if (isSuperadmin) {
       void loadAccessCodes();
       void loadUsers();
@@ -474,6 +526,50 @@ export function AdminDashboard({
       onCatalogChanged();
     } catch (error) {
       notify(error instanceof Error ? error.message : "No se pudo crear la función.", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const createWorkshop = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    setSubmitting(true);
+    try {
+      const result = await apiRequest<{ workshop: { title: string } }>("/admin/workshops", {
+        method: "POST",
+        body: JSON.stringify({
+          title: getFormValue(formData, "title"),
+          description: getFormValue(formData, "description"),
+          schedule: getFormValue(formData, "schedule"),
+          teacher: getFormValue(formData, "teacher"),
+          capacity: Number(formData.get("capacity")),
+        }),
+      });
+      form.reset();
+      notify(`Se publicó el taller “${result.workshop.title}”.`);
+      onCatalogChanged();
+      await loadWorkshops();
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "No se pudo crear el taller.", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const updateWorkshopStatus = async (workshop: AdminWorkshop) => {
+    setSubmitting(true);
+    try {
+      await apiRequest(`/admin/workshops/${encodeURIComponent(workshop.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ active: !workshop.active }),
+      });
+      notify(workshop.active ? "El taller fue archivado." : "El taller volvió a publicarse.");
+      onCatalogChanged();
+      await loadWorkshops();
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "No se pudo actualizar el taller.", "error");
     } finally {
       setSubmitting(false);
     }
@@ -1079,6 +1175,129 @@ export function AdminDashboard({
                 Guardar función
               </button>
             </form>
+          )}
+        </section>
+
+        <section className="admin-section" aria-labelledby="admin-workshops-title">
+          <div className="admin-section__heading">
+            <div>
+              <p className="eyebrow"><span className="eyebrow__rule" />Formación</p>
+              <h3 id="admin-workshops-title">Talleres y convocatorias</h3>
+            </div>
+            <button
+              className="button button--outline"
+              type="button"
+              onClick={() => void loadWorkshops()}
+              disabled={loadingWorkshops}
+            >
+              {loadingWorkshops ? "Actualizando..." : "Actualizar"}
+            </button>
+          </div>
+          <form className="admin-form" onSubmit={(event) => void createWorkshop(event)}>
+            <label>
+              Nombre del taller o convocatoria
+              <input name="title" minLength={2} maxLength={120} required />
+            </label>
+            <label>
+              Responsable / docente
+              <input name="teacher" minLength={2} maxLength={120} required />
+            </label>
+            <label className="admin-form__wide">
+              Descripción y requisitos
+              <textarea name="description" minLength={10} maxLength={2000} rows={3} required />
+            </label>
+            <label>
+              Horario
+              <input name="schedule" minLength={3} maxLength={200} required />
+            </label>
+            <label>
+              Cupos disponibles
+              <input name="capacity" type="number" min={1} max={500} required />
+            </label>
+            <button className="button button--burgundy admin-form__wide" type="submit" disabled={submitting}>
+              Publicar taller
+            </button>
+          </form>
+          {loadingWorkshops ? (
+            <p className="admin-empty">Cargando talleres...</p>
+          ) : workshops.length === 0 ? (
+            <p className="admin-empty">Todavía no hay talleres ni convocatorias.</p>
+          ) : (
+            <div className="admin-show-list">
+              {workshops.map((workshop) => (
+                <article className="admin-show-row" key={workshop.id}>
+                  <div>
+                    <strong>{workshop.title}</strong>
+                    <span>{workshop.teacher} · {workshop.schedule} · {workshop.enrolledSeats}/{workshop.capacity} cupos · {workshop.applicationCount} postulaciones</span>
+                    <p>{workshop.description}</p>
+                  </div>
+                  <button
+                    className={`button ${workshop.active ? "button--outline" : "button--gold"}`}
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void updateWorkshopStatus(workshop)}
+                  >
+                    {workshop.active ? "Archivar" : "Publicar"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="admin-section" aria-labelledby="admin-workshop-applications-title">
+          <div className="admin-section__heading">
+            <div>
+              <p className="eyebrow"><span className="eyebrow__rule" />Inscripciones</p>
+              <h3 id="admin-workshop-applications-title">Postulaciones recibidas</h3>
+            </div>
+          </div>
+          {loadingWorkshops ? (
+            <p className="admin-empty">Cargando postulaciones...</p>
+          ) : workshopApplications.length === 0 ? (
+            <p className="admin-empty">Todavía no hay postulaciones.</p>
+          ) : (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead><tr><th>Taller / convocatoria</th><th>Postulante</th><th>Correo</th><th>Fecha</th></tr></thead>
+                <tbody>
+                  {workshopApplications.map((application) => (
+                    <tr key={application.id}>
+                      <td><strong>{application.workshop.title}</strong><span>{application.workshop.schedule}</span></td>
+                      <td>{application.name}</td>
+                      <td>{application.email}</td>
+                      <td>{formatPerformanceDate(application.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="admin-section" aria-labelledby="admin-reviews-title">
+          <div className="admin-section__heading">
+            <div>
+              <p className="eyebrow"><span className="eyebrow__rule" />Experiencias</p>
+              <h3 id="admin-reviews-title">Opiniones privadas de funciones</h3>
+            </div>
+          </div>
+          {loadingWorkshops ? (
+            <p className="admin-empty">Cargando opiniones...</p>
+          ) : performanceReviews.length === 0 ? (
+            <p className="admin-empty">Todavía no hay opiniones de funciones.</p>
+          ) : (
+            <div className="admin-show-list">
+              {performanceReviews.map((review) => (
+                <article className="admin-show-row admin-review-row" key={review.id}>
+                  <div>
+                    <strong>{review.performance.show.title} · {review.rating}/5</strong>
+                    <span>{review.user.displayName || "Usuario sin nombre para mostrar"} · Función {formatPerformanceDate(review.performance.startsAt)} · Opinión {formatPerformanceDate(review.createdAt)}</span>
+                    <p>{review.comment}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
           )}
         </section>
       </div>

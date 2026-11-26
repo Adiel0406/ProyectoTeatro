@@ -4,7 +4,9 @@ import {
   adminRoleChangeSchema,
   adminReportPeriodSchema,
   createShowSchema,
+  createWorkshopSchema,
   credentialsSchema,
+  performanceReviewSchema,
   decodeJpegPosterDataUrl,
   MAX_POSTER_BYTES,
   profileSchema,
@@ -75,6 +77,27 @@ describe("account and administrator schemas", () => {
     expect(adminReportPeriodSchema.safeParse("daily").success).toBe(false);
     expect(adminRoleChangeSchema.safeParse({ role: "ADMIN" }).success).toBe(true);
     expect(adminRoleChangeSchema.safeParse({ role: "SUPERADMIN" }).success).toBe(false);
+  });
+
+  it("validates workshop creation and post-performance reviews", () => {
+    const workshop = {
+      title: "Taller de actuación",
+      description: "Prácticas escénicas para principiantes y avanzados.",
+      schedule: "Lunes y miércoles, 18:00",
+      teacher: "Docente de teatro",
+      capacity: 24,
+    };
+    expect(createWorkshopSchema.safeParse(workshop).success).toBe(true);
+    expect(createWorkshopSchema.safeParse({ ...workshop, capacity: 0 }).success).toBe(false);
+
+    const review = {
+      performanceId: "2f3c4b5a-6d7e-4890-a123-456789abcdef",
+      rating: 5,
+      comment: "Una función que disfruté mucho.",
+    };
+    expect(performanceReviewSchema.safeParse(review).success).toBe(true);
+    expect(performanceReviewSchema.safeParse({ ...review, rating: 6 }).success).toBe(false);
+    expect(performanceReviewSchema.safeParse({ ...review, comment: "Bien." }).success).toBe(false);
   });
 
   it("rejects show schedules that do not have a future performance", () => {
