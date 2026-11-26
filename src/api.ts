@@ -90,7 +90,10 @@ export interface PerformanceDetail {
 }
 
 interface ApiErrorBody {
-  error?: { message?: string };
+  error?: {
+    message?: string;
+    details?: Array<{ path: string; message: string }>;
+  };
 }
 
 export class ApiError extends Error {
@@ -118,8 +121,14 @@ export async function apiRequest<T>(
   const result = (await response.json()) as T & ApiErrorBody;
 
   if (!response.ok) {
+    const validationDetails = result.error?.details
+      ?.map(({ path, message }) => `${path || "solicitud"}: ${message}`)
+      .join("; ");
     throw new ApiError(
-      result.error?.message ?? "No se pudo completar la solicitud.",
+      [
+        result.error?.message ?? "No se pudo completar la solicitud.",
+        validationDetails,
+      ].filter(Boolean).join(" "),
       response.status,
     );
   }

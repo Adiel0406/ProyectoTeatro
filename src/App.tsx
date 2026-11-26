@@ -122,23 +122,31 @@ function App() {
   const loadCatalog = async (signal?: AbortSignal) => {
     setLoading(true);
     setCatalogError("");
-    try {
-      const [showData, workshopData] = await Promise.all([
-        apiRequest<Show[]>("/shows", { signal }),
-        apiRequest<Workshop[]>("/workshops", { signal }),
-      ]);
-      setShows(showData);
-      setWorkshops(workshopData);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
-      setCatalogError(
-        error instanceof Error ? error.message : "No se pudo cargar la cartelera.",
+    const [showsResult, workshopsResult] = await Promise.allSettled([
+      apiRequest<Show[]>("/shows", { signal }),
+      apiRequest<Workshop[]>("/workshops", { signal }),
+    ]);
+    if (signal?.aborted) return;
+
+    const errors: string[] = [];
+    if (showsResult.status === "fulfilled") {
+      setShows(showsResult.value);
+    } else if (!(showsResult.reason instanceof DOMException && showsResult.reason.name === "AbortError")) {
+      errors.push(
+        `No se pudo cargar la cartelera: ${showsResult.reason instanceof Error ? showsResult.reason.message : "error inesperado."}`,
       );
-    } finally {
-      if (!signal?.aborted) setLoading(false);
     }
+
+    if (workshopsResult.status === "fulfilled") {
+      setWorkshops(workshopsResult.value);
+    } else if (!(workshopsResult.reason instanceof DOMException && workshopsResult.reason.name === "AbortError")) {
+      errors.push(
+        `No se pudieron cargar los talleres: ${workshopsResult.reason instanceof Error ? workshopsResult.reason.message : "error inesperado."}`,
+      );
+    }
+
+    setCatalogError(errors.join(" "));
+    setLoading(false);
   };
 
   useEffect(() => {
