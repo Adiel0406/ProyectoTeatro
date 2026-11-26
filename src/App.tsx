@@ -22,6 +22,16 @@ import obra2 from "../assets/image/obra2.jpg";
 import obra3 from "../assets/image/obra3.jpg";
 import obra4 from "../assets/image/obra 4.jpg";
 import { useScrollReveal } from "./useScrollReveal.ts";
+import { useOffline } from "./useOffline.ts";
+
+// ─── Registro del Service Worker ─────────────────────────────────────────────
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // El registro puede fallar en contextos sin HTTPS; no es crítico.
+    });
+  });
+}
 
 const GENRE_LABELS: Record<Genre, string> = {
   drama: "Drama",
@@ -118,6 +128,7 @@ function App() {
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
   const headerRef = useRef<HTMLElement>(null);
   const { toast, showToast, dismissToast } = useToast();
+  const isOffline = useOffline();
 
   const loadCatalog = async (signal?: AbortSignal) => {
     setLoading(true);
@@ -154,6 +165,18 @@ function App() {
     void loadCatalog(controller.signal);
     return () => controller.abort();
   }, []);
+
+  // Reintento automático cuando vuelve la conexión
+  useEffect(() => {
+    const handleOnline = () => {
+      if (catalogError || shows.length === 0) {
+        void loadCatalog();
+        showToast("Conexión restaurada. Actualizando cartelera...");
+      }
+    };
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [catalogError, shows.length, showToast]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -269,6 +292,12 @@ function App() {
   return (
     <>
       <a className="skip-link" href="#contenido">Saltar al contenido</a>
+      {isOffline && (
+        <div className="offline-banner" role="alert" aria-live="assertive">
+          <span className="offline-banner__icon" aria-hidden="true">⚠</span>
+          <span>Sin conexión a internet. La cartelera puede no estar actualizada.</span>
+        </div>
+      )}
       <header className={`site-header${menuOpen ? " is-menu-open" : ""}`} ref={headerRef}>
         <a className="brand" href="#inicio" aria-label="Teatro UCB, inicio">
           <img className="brand__mark" src="/teatro-ucb.svg" alt="" />
@@ -461,16 +490,34 @@ function App() {
           </p>
           {catalogError && (
             <div className="api-alert" role="alert">
-              <p>{catalogError}</p>
-              <button className="button button--outline" type="button" onClick={() => void loadCatalog()}>
-                Volver a intentar
-              </button>
+              <p>
+                <span aria-hidden="true">⚠ </span>
+                {isOffline
+                  ? "Sin conexión. Cuando tengas internet, la cartelera se actualizará automáticamente."
+                  : catalogError}
+              </p>
+              {!isOffline && (
+                <button className="button button--outline" type="button" onClick={() => void loadCatalog()}>
+                  Volver a intentar
+                </button>
+              )}
             </div>
           )}
           <div className="show-grid" aria-busy={loading}>
-            {filteredShows.map((show, index) => {
-              const nextPerformance = show.performances[0];
-              return (
+            {loading
+              ? Array.from({ length: 4 }, (_, i) => (
+                  <article className="show-card show-card--skeleton" key={i} aria-hidden="true">
+                    <div className="show-card__poster skeleton-block" />
+                    <div className="show-card__body">
+                      <div className="skeleton-line skeleton-line--short" />
+                      <div className="skeleton-line skeleton-line--title" />
+                      <div className="skeleton-line" />
+                      <div className="skeleton-line skeleton-line--short" />
+                    </div>
+                  </article>
+                ))
+              : filteredShows.map((show, index) => {
+              const nextPerformance = show.performances[0];              return (
                 <article
                   className="show-card"
                   data-genre={show.genre}
