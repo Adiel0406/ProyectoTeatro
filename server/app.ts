@@ -113,7 +113,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       const session = await prisma.authSession.findUnique({
         where: { tokenHash: hashToken(token) },
         select: {
-          user: { select: { id: true, ci: true, role: true } },
+          user: { select: { id: true, ci: true, role: true, displayName: true } },
           expiresAt: true,
         },
       });
@@ -142,7 +142,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       const session = await prisma.authSession.findUnique({
         where: { tokenHash: hashToken(token) },
         select: {
-          user: { select: { id: true, ci: true, role: true } },
+          user: { select: { id: true, ci: true, role: true, displayName: true } },
           expiresAt: true,
         },
       });
@@ -213,7 +213,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
         if (!input.accessCode) {
           return transaction.user.create({
             data: { ...userData, role: "USER" },
-            select: { id: true, ci: true, role: true },
+            select: { id: true, ci: true, role: true, displayName: true },
           });
         }
 
@@ -233,7 +233,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
 
         const user = await transaction.user.create({
           data: userData,
-          select: { id: true, ci: true, role: true },
+          select: { id: true, ci: true, role: true, displayName: true },
         });
         const consumed = await transaction.accessCode.updateMany({
           where: {
@@ -286,7 +286,7 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
     const input = credentialsSchema.parse(request.body);
     const user = await prisma.user.findUnique({
       where: { ci: input.ci },
-      select: { id: true, ci: true, role: true, passwordHash: true },
+      select: { id: true, ci: true, role: true, displayName: true, passwordHash: true },
     });
     if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
       response.status(401).json({
@@ -309,7 +309,14 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       });
     });
     response.setHeader("Set-Cookie", `teatro_session=${token}; ${sessionCookieOptions}`);
-    response.json({ user: { id: user.id, ci: user.ci, role: user.role } });
+    response.json({
+      user: {
+        id: user.id,
+        ci: user.ci,
+        role: user.role,
+        displayName: user.displayName,
+      },
+    });
   });
 
   api.get("/auth/me", requireAuth, (_request, response) => {

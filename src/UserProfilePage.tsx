@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   apiRequest,
   type AccountReservation,
@@ -14,14 +14,13 @@ function formatProfileDate(value: string) {
   }).format(new Date(value));
 }
 
-export function UserProfileDialog({
-  onClose,
+export function UserProfilePage({
+  onDisplayNameChange,
   notify,
 }: {
-  onClose: () => void;
+  onDisplayNameChange: (displayName: string | null) => void;
   notify: (message: string, tone?: ToastTone) => void;
 }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [reservations, setReservations] = useState<AccountReservation[]>([]);
   const [accessEvents, setAccessEvents] = useState<UserAccessEvent[]>([]);
@@ -32,8 +31,6 @@ export function UserProfileDialog({
   const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
     void Promise.all([
       apiRequest<{ user: UserProfile }>("/account/profile"),
       apiRequest<{ reservations: AccountReservation[]; accessEvents: UserAccessEvent[] }>(
@@ -49,9 +46,6 @@ export function UserProfileDialog({
         setError(loadError instanceof Error ? loadError.message : "No se pudo cargar tu perfil.");
       })
       .finally(() => setLoading(false));
-    return () => {
-      if (dialog?.open) dialog.close();
-    };
   }, []);
 
   const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
@@ -71,6 +65,7 @@ export function UserProfileDialog({
         }),
       });
       setProfile(result.user);
+      onDisplayNameChange(result.user.displayName);
       notify("Tu perfil fue actualizado.");
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : "No se pudo guardar tu perfil.";
@@ -132,16 +127,17 @@ export function UserProfileDialog({
   );
 
   return (
-    <dialog
-      className="dialog profile-dialog"
-      ref={dialogRef}
-      aria-labelledby="profile-title"
-      onCancel={onClose}
-    >
-      <div className="dialog__panel">
-        <button className="dialog__close" type="button" aria-label="Cerrar perfil" onClick={onClose}>×</button>
-        <p className="eyebrow"><span className="eyebrow__rule" />Tu espacio</p>
-        <h2 id="profile-title">Mi <em>perfil.</em></h2>
+    <section className="profile-page" aria-labelledby="profile-title">
+      <header className="account-page__heading">
+        <div>
+          <p className="eyebrow">
+            <span className="eyebrow__rule" />
+            Tu espacio{profile?.displayName ? ` · ${profile.displayName}` : ""}
+          </p>
+          <h1 id="profile-title">Mi <em>perfil.</em></h1>
+        </div>
+        <a className="button button--small" href="/">Volver al teatro</a>
+      </header>
         {loading ? (
           <p className="admin-empty">Cargando perfil e historial...</p>
         ) : profile ? (
@@ -259,7 +255,6 @@ export function UserProfileDialog({
           <p className="form-feedback" role="alert">{error || "No se pudo cargar tu perfil."}</p>
         )}
         {error && profile && <p className="form-feedback" role="alert">{error}</p>}
-      </div>
-    </dialog>
+    </section>
   );
 }

@@ -35,10 +35,10 @@ export interface AuthUser {
   id: string;
   ci: string;
   role: "USER" | "ADMIN" | "SUPERADMIN";
+  displayName: string | null;
 }
 
 export interface UserProfile extends AuthUser {
-  displayName: string | null;
   bio: string | null;
   favoriteQuote: string | null;
   createdAt: string;

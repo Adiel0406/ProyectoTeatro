@@ -119,6 +119,7 @@
   cursor: pointer;
   font: inherit;
   font-size: 0.8rem;
+  text-decoration: none;
 }
 
 .site-nav__action:hover {
@@ -312,8 +313,53 @@
   font-weight: 700;
 }
 
-.admin-dialog {
+.admin-page,
+.profile-page {
   width: min(96vw, 1080px);
+  margin: clamp(2rem, 5vw, 4rem) auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-light);
+}
+
+.profile-page {
+  max-width: 900px;
+  padding: clamp(1.25rem, 3.5vw, 2.5rem);
+}
+
+.account-page__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.account-page__heading h1 {
+  margin: 0.7rem 3rem 1.2rem 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.account-page__heading > a {
+  flex-shrink: 0;
+}
+
+.account-route {
+  width: min(92vw, 1080px);
+  min-height: 50vh;
+  margin: clamp(2rem, 5vw, 4rem) auto;
+  padding: clamp(1.25rem, 3.5vw, 2.5rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-light);
+}
+
+@media (max-width: 640px) {
+  .account-page__heading {
+    flex-direction: column;
+  }
 }
 
 .admin-panel {
@@ -599,10 +645,6 @@
   color: var(--color-text-muted);
   font-size: 0.68rem;
   font-weight: 400;
-}
-
-.admin-panel > h2 {
-  max-width: 780px;
 }
 
 .admin-section {

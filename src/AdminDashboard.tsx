@@ -155,16 +155,13 @@ function getFormValue(formData: FormData, name: string) {
 
 export function AdminDashboard({
   userRole,
-  onClose,
   onCatalogChanged,
   notify,
 }: {
   userRole: "ADMIN" | "SUPERADMIN";
-  onClose: () => void;
   onCatalogChanged: () => void;
   notify: (message: string, tone?: ToastTone) => void;
 }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const isSuperadmin = userRole === "SUPERADMIN";
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [adminShows, setAdminShows] = useState<AdminShow[]>([]);
@@ -289,8 +286,6 @@ export function AdminDashboard({
   };
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
     void loadReservations();
     void loadAdminShows();
     void loadWorkshops();
@@ -300,9 +295,6 @@ export function AdminDashboard({
       void loadAccessEvents();
     }
     void loadReport();
-    return () => {
-      if (dialog?.open) dialog.close();
-    };
   }, [isSuperadmin]);
 
   const filteredReservations = useMemo(() => {
@@ -576,17 +568,16 @@ export function AdminDashboard({
   };
 
   return (
-    <dialog
-      className="dialog admin-dialog"
-      ref={dialogRef}
-      aria-labelledby="admin-title"
-      onCancel={onClose}
-    >
-      <div className="dialog__panel admin-panel">
-        <button className="dialog__close" type="button" aria-label="Cerrar panel" onClick={onClose}>×</button>
-        <p className="eyebrow"><span className="eyebrow__rule" />Gestión del teatro</p>
-        <h2 id="admin-title">Panel de <em>administración.</em></h2>
-        <p className="admin-panel__intro">Consulta la actividad de las cuentas, las reservas y el rendimiento de la cartelera.</p>
+    <section className="admin-page" aria-labelledby="admin-title">
+      <div className="admin-panel">
+        <header className="account-page__heading">
+          <div>
+            <p className="eyebrow"><span className="eyebrow__rule" />Gestión del teatro</p>
+            <h1 id="admin-title">Panel de <em>administración.</em></h1>
+            <p className="admin-panel__intro">Consulta la actividad de las cuentas, las reservas y el rendimiento de la cartelera.</p>
+          </div>
+          <a className="button button--small" href="/">Volver al teatro</a>
+        </header>
 
         <section className="admin-metrics" aria-label="Resumen de actividad">
           <article className="admin-metric">
@@ -1301,6 +1292,6 @@ export function AdminDashboard({
           )}
         </section>
       </div>
-    </dialog>
+    </section>
   );
 }

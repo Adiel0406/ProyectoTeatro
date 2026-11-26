@@ -12,7 +12,7 @@ import { AdminDashboard } from "./AdminDashboard.tsx";
 import { AuthDialog } from "./AuthDialog.tsx";
 import { INFO_PAGES } from "./infoPages.ts";
 import { WorkshopDialog } from "./WorkshopDialog.tsx";
-import { UserProfileDialog } from "./UserProfileDialog.tsx";
+import { UserProfilePage } from "./UserProfilePage.tsx";
 import { Toast, useToast } from "./Toast.tsx";
 import { StagePreview3D } from "./StagePreview3D.tsx";
 import bodasDeSangre from "../assets/image/bodasdesangre.jpg";
@@ -23,7 +23,7 @@ import obra3 from "../assets/image/obra3.jpg";
 import obra4 from "../assets/image/obra 4.jpg";
 import { useScrollReveal } from "./useScrollReveal.ts";
 import { useOffline } from "./useOffline.ts";
-import { MAIN_PAGES, type MainPage } from "./mainPages.ts";
+import { MAIN_PAGES, type AppPage, type MainPage } from "./mainPages.ts";
 
 // ─── Registro del Service Worker ─────────────────────────────────────────────
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
@@ -120,7 +120,7 @@ const PAGE_DESCRIPTIONS: Record<Exclude<MainPage, "home">, string> = {
   faq: "Encuentra respuestas sobre reservas, talleres y el funcionamiento del teatro.",
 };
 
-function App({ page }: { page: MainPage }) {
+function App({ page }: { page: AppPage }) {
   const [shows, setShows] = useState<Show[]>([]);
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,9 +133,8 @@ function App({ page }: { page: MainPage }) {
   const [favorites, setFavorites] = useState<string[]>(getInitialFavorites);
   const [favoritesOnly, setFavoritesOnly] = useState(getInitialFavoritesOnly);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
-  const [adminPanelOpen, setAdminPanelOpen] = useState(false);
-  const [profilePanelOpen, setProfilePanelOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
   const headerRef = useRef<HTMLElement>(null);
   const { toast, showToast, dismissToast } = useToast();
@@ -173,7 +172,12 @@ function App({ page }: { page: MainPage }) {
 
   useEffect(() => {
     const currentPage = MAIN_PAGES.find((item) => item.slug === page);
-    document.title = `${currentPage?.label ?? "Teatro UCB"} | Teatro UCB`;
+    const pageTitle = page === "admin"
+      ? "Panel de administración"
+      : page === "profile"
+        ? "Mi perfil"
+        : currentPage?.label ?? "Teatro UCB";
+    document.title = `${pageTitle} | Teatro UCB`;
   }, [page]);
 
   useEffect(() => {
@@ -207,6 +211,9 @@ function App({ page }: { page: MainPage }) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           showToast(error instanceof Error ? error.message : "No se pudo verificar la sesión.", "error");
         }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setSessionLoading(false);
       });
     return () => controller.abort();
   }, [showToast]);
@@ -351,30 +358,28 @@ function App({ page }: { page: MainPage }) {
             </div>
           </div>
           {(currentUser?.role === "ADMIN" || currentUser?.role === "SUPERADMIN") && (
-            <button
+            <a
               className="site-nav__action"
-              type="button"
-              onClick={() => {
-                setAdminPanelOpen(true);
-                setMenuOpen(false);
-              }}
+              href="/admin"
+              onClick={() => setMenuOpen(false)}
             >
               Panel admin
-            </button>
+            </a>
           )}
           {currentUser && (
-            <button
+            <a
               className="site-nav__action"
-              type="button"
-              onClick={() => {
-                setProfilePanelOpen(true);
-                setMenuOpen(false);
-              }}
+              href="/perfil"
+              onClick={() => setMenuOpen(false)}
             >
               Mi perfil
-            </button>
+            </a>
           )}
-          {currentUser && <span className="site-nav__user">CI {currentUser.ci}</span>}
+          {currentUser && (
+            <span className="site-nav__user">
+              {currentUser.displayName?.trim() || `CI ${currentUser.ci}`}
+            </span>
+          )}
           <button
             className="button button--small button--account"
             type="button"
@@ -408,6 +413,51 @@ function App({ page }: { page: MainPage }) {
       {toast && <Toast toast={toast} onDismiss={dismissToast} />}
 
       <main id="contenido" className={`main-page main-page--${page}`}>
+        {page === "admin" && (
+          sessionLoading ? (
+            <section className="account-route" aria-live="polite">
+              <p className="admin-empty">Verificando tu sesión...</p>
+            </section>
+          ) : currentUser && (currentUser.role === "ADMIN" || currentUser.role === "SUPERADMIN") ? (
+            <AdminDashboard
+              userRole={currentUser.role}
+              onCatalogChanged={() => void loadCatalog()}
+              notify={showToast}
+            />
+          ) : (
+            <section className="account-route">
+              <p className="eyebrow"><span className="eyebrow__rule" />Gestión del teatro</p>
+              <h1>Panel de <em>administración.</em></h1>
+              <p>Inicia sesión con una cuenta de administrador para continuar.</p>
+              <button className="button button--gold" type="button" onClick={() => setAuthDialogOpen(true)}>
+                Iniciar sesión
+              </button>
+            </section>
+          )
+        )}
+        {page === "profile" && (
+          sessionLoading ? (
+            <section className="account-route" aria-live="polite">
+              <p className="admin-empty">Verificando tu sesión...</p>
+            </section>
+          ) : currentUser ? (
+            <UserProfilePage
+              notify={showToast}
+              onDisplayNameChange={(displayName) => {
+                setCurrentUser((user) => user ? { ...user, displayName } : user);
+              }}
+            />
+          ) : (
+            <section className="account-route">
+              <p className="eyebrow"><span className="eyebrow__rule" />Tu espacio</p>
+              <h1>Mi <em>perfil.</em></h1>
+              <p>Inicia sesión para consultar y actualizar tu perfil.</p>
+              <button className="button button--gold" type="button" onClick={() => setAuthDialogOpen(true)}>
+                Iniciar sesión
+              </button>
+            </section>
+          )
+        )}
         {page === "home" && (
           <>
         <section className="hero" id="inicio" aria-labelledby="hero-title">
@@ -888,6 +938,7 @@ function App({ page }: { page: MainPage }) {
           onClose={() => setAuthDialogOpen(false)}
           onAuthenticated={(user) => {
             setCurrentUser(user);
+            setSessionLoading(false);
             setAuthDialogOpen(false);
             showToast(
               user.role === "SUPERADMIN"
@@ -897,21 +948,6 @@ function App({ page }: { page: MainPage }) {
                   : "Sesión iniciada.",
             );
           }}
-        />
-      )}
-      {adminPanelOpen &&
-        (currentUser?.role === "ADMIN" || currentUser?.role === "SUPERADMIN") && (
-        <AdminDashboard
-          userRole={currentUser.role}
-          onClose={() => setAdminPanelOpen(false)}
-          onCatalogChanged={() => void loadCatalog()}
-          notify={showToast}
-        />
-      )}
-      {profilePanelOpen && currentUser && (
-        <UserProfileDialog
-          onClose={() => setProfilePanelOpen(false)}
-          notify={showToast}
         />
       )}
     </>
