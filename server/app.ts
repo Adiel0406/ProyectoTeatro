@@ -775,6 +775,23 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
   ) {
     const startsAt = new Date(input.startsAt);
     const endsAt = new Date(startsAt.getTime() + duration * 60_000);
+
+    // Verificar choque de horario y sala
+    const venueNormalized = input.venue.trim().toLowerCase();
+    const conflicting = await transaction.performance.findFirst({
+      where: {
+        endsAt: { gt: startsAt },
+        startsAt: { lt: endsAt },
+      },
+      select: { id: true, startsAt: true, endsAt: true, venue: true, show: { select: { title: true } } },
+    });
+    if (conflicting && conflicting.venue.trim().toLowerCase() === venueNormalized) {
+      const fmt = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short" });
+      throw new Error(
+        `La sala "${input.venue}" ya tiene una función de "${conflicting.show.title}" programada de ${fmt.format(conflicting.startsAt)} a ${fmt.format(conflicting.endsAt)}. Elige otra sala u otro horario.`,
+      );
+    }
+
     const performance = await transaction.performance.create({
       data: { showId, startsAt, endsAt, venue: input.venue },
       select: { id: true, startsAt: true, endsAt: true, venue: true },
@@ -814,27 +831,69 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       MUSICAL: "voices",
     }[input.genre];
 
-    const result = await prisma.$transaction(async (transaction) => {
-      const show = await transaction.show.create({
-        data: {
-          slug: `${slugBase}-${randomBytes(3).toString("hex")}`,
-          title: input.title,
-          synopsis: input.synopsis,
-          playwright: input.playwright,
-          genre: input.genre,
-          duration: input.duration,
-          posterStyle,
-          ...(posterBuffer
-            ? { poster: { create: { imageData: Uint8Array.from(posterBuffer) } } }
-            : {}),
-        },
-        select: { id: true, title: true },
+    try {
+      const result = await prisma.$transaction(async (transaction) => {
+        const show = await transaction.show.create({
+          data: {
+            slug: `${slugBase}-${randomBytes(3).toString("hex")}`,
+            title: input.title,
+            synopsis: input.synopsis,
+            playwright: input.playwright,
+            genre: input.genre,
+            duration: input.duration,
+            posterStyle,
+            ...(posterBuffer
+              ? { poster: { create: { imageData: Uint8Array.from(posterBuffer) } } }
+              : {}),
+          },
+          select: { id: true, title: true },
+        });
+        const performance = await createPerformance(transaction, show.id, input, input.duration);
+        return { show, performance };
       });
-      const performance = await createPerformance(transaction, show.id, input, input.duration);
-      return { show, performance };
-    });
+      response.status(201).json(result);
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("La sala")) {
+        response.status(409).json({
+          error: { code: "VENUE_CONFLICT", message: error.message },
+        });
+        return;
+      }
+      throw error;
+    }
+  });
 
-    response.status(201).json(result);
+  // Endpoint para verificar conflicto de sala/horario en tiempo real
+  api.get("/admin/performances/check-conflict", requireAuth, requireAdmin, async (request, response) => {
+    const { startsAt, venue, duration } = request.query as Record<string, string>;
+    if (!startsAt || !venue || !duration) {
+      response.json({ conflict: false });
+      return;
+    }
+    const start = new Date(startsAt);
+    const durationMin = Number(duration);
+    if (isNaN(start.getTime()) || isNaN(durationMin) || durationMin <= 0) {
+      response.json({ conflict: false });
+      return;
+    }
+    const end = new Date(start.getTime() + durationMin * 60_000);
+    const venueNormalized = venue.trim().toLowerCase();
+    const conflicting = await prisma.performance.findFirst({
+      where: {
+        endsAt: { gt: start },
+        startsAt: { lt: end },
+      },
+      select: { startsAt: true, endsAt: true, venue: true, show: { select: { title: true } } },
+    });
+    if (conflicting && conflicting.venue.trim().toLowerCase() === venueNormalized) {
+      const fmt = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short" });
+      response.json({
+        conflict: true,
+        message: `La sala "${venue}" ya tiene la función "${conflicting.show.title}" de ${fmt.format(conflicting.startsAt)} a ${fmt.format(conflicting.endsAt)}.`,
+      });
+      return;
+    }
+    response.json({ conflict: false });
   });
 
   api.post("/admin/shows/:id/performances", requireAuth, requireAdmin, async (request, response) => {
@@ -857,6 +916,12 @@ export function createApp(prisma: PrismaClient, webOrigin: string) {
       );
       response.status(201).json({ performance });
     } catch (error) {
+      if (error instanceof Error && error.message.startsWith("La sala")) {
+        response.status(409).json({
+          error: { code: "VENUE_CONFLICT", message: error.message },
+        });
+        return;
+      }
       if (isPrismaCode(error, "P2002")) {
         response.status(409).json({
           error: { code: "PERFORMANCE_EXISTS", message: "Ya existe una función de esta obra en esa fecha." },
