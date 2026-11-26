@@ -29,7 +29,7 @@ const shows: Array<{
     genre: "DRAMA",
     duration: 90,
     posterStyle: "bernarda",
-    dates: ["2026-11-13T23:30:00.000Z", "2026-11-20T23:30:00.000Z"],
+    dates: ["2026-12-11T23:30:00.000Z", "2026-12-18T23:30:00.000Z"],
   },
   {
     slug: "una-noche-de-verano",
@@ -40,7 +40,7 @@ const shows: Array<{
     genre: "COMEDIA",
     duration: 75,
     posterStyle: "summer",
-    dates: ["2026-11-15T00:00:00.000Z", "2026-11-22T00:00:00.000Z"],
+    dates: ["2026-12-13T00:00:00.000Z", "2026-12-20T00:00:00.000Z"],
   },
   {
     slug: "voces-del-altiplano",
@@ -51,7 +51,7 @@ const shows: Array<{
     genre: "MUSICAL",
     duration: 80,
     posterStyle: "voices",
-    dates: ["2026-11-15T22:00:00.000Z", "2026-11-22T22:00:00.000Z"],
+    dates: ["2026-12-14T22:00:00.000Z", "2026-12-21T22:00:00.000Z"],
   },
 ];
 

@@ -22,6 +22,9 @@ export const workshopApplicationSchema = z.object({
   workshopId: z.string().uuid(),
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().email().max(254).transform((email) => email.toLowerCase()),
+  phone: z.string().trim().max(30).optional().transform((value) => value || null),
+  experienceLevel: z.enum(["principiante", "intermedio", "avanzado"]).optional(),
+  motivation: z.string().trim().max(500).optional().transform((value) => value || null),
 });
 
 export const idSchema = z.string().uuid();

@@ -199,12 +199,15 @@ model Workshop {
 }
 
 model WorkshopApplication {
-  id         String   @id @default(uuid())
-  workshopId String
-  name       String
-  email      String
-  createdAt  DateTime @default(now())
-  workshop   Workshop @relation(fields: [workshopId], references: [id], onDelete: Restrict)
+  id              String   @id @default(uuid())
+  workshopId      String
+  name            String
+  email           String
+  phone           String?
+  experienceLevel String?
+  motivation      String?
+  createdAt       DateTime @default(now())
+  workshop        Workshop @relation(fields: [workshopId], references: [id], onDelete: Restrict)
 
   @@unique([workshopId, email])
   @@index([workshopId, createdAt])
